@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
+import { ArrowLeft, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, Camera, Lock, Shield } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,9 @@ interface ExamDetail extends ExamRecord {
 
 export default function AdminPage() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
   const [records, setRecords] = useState<ExamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -42,9 +45,38 @@ export default function AdminPage() {
 
   const limit = 15;
 
+  // 简单的前端密码验证（实际生产环境应使用服务端验证）
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+
   useEffect(() => {
-    fetchRecords();
-  }, [page]);
+    // 检查是否已验证过
+    const authed = sessionStorage.getItem('admin_authenticated');
+    if (authed === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchRecords();
+    }
+  }, [page, isAuthenticated]);
+
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setAuthError('');
+      sessionStorage.setItem('admin_authenticated', 'true');
+    } else {
+      setAuthError('密码错误，请重试');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPassword('');
+    sessionStorage.removeItem('admin_authenticated');
+  };
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -100,14 +132,61 @@ export default function AdminPage() {
     return 'bg-red-100 text-red-800';
   };
 
+  // 登录页面
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">管理端访问</CardTitle>
+            <p className="text-slate-500 text-sm mt-2">请输入访问密码</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="password"
+                placeholder="请输入密码"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                className="pl-10"
+              />
+            </div>
+            {authError && (
+              <p className="text-red-500 text-sm text-center">{authError}</p>
+            )}
+            <Button onClick={handleLogin} className="w-full">
+              登录
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/')} className="w-full">
+              返回首页
+            </Button>
+            <p className="text-xs text-slate-400 text-center">
+              默认密码：admin123（可在环境变量 NEXT_PUBLIC_ADMIN_PASSWORD 修改）
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <header className="bg-primary text-primary-foreground py-4 shadow">
-        <div className="container mx-auto px-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-primary-foreground hover:bg-primary-foreground/20">
-            <ArrowLeft className="h-5 w-5" />
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-primary-foreground hover:bg-primary-foreground/20">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-bold">考试成绩管理</h1>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/20">
+            退出登录
           </Button>
-          <h1 className="text-xl font-bold">考试成绩管理</h1>
         </div>
       </header>
 
