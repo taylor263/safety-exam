@@ -25,11 +25,11 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* 头部 */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+      <header className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white shadow-lg">
         {/* DEC品牌标识条 - 蓝色主题，左上角DEC */}
-        <div className="bg-blue-700">
+        <div className="bg-blue-800/50">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center gap-3">
               {/* DEC椭圆Logo */}
@@ -55,10 +55,10 @@ export default function HomePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* 手机端提示 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <Smartphone className="h-5 w-5 text-blue-600" />
+        {/* 手机端提示 - 渐变卡片 */}
+        <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-200 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+            <Smartphone className="h-5 w-5 text-white" />
           </div>
           <div>
             <p className="font-medium text-blue-800">手机端已优化</p>
@@ -67,13 +67,13 @@ export default function HomePage() {
         </div>
 
         {/* 考试须知 */}
-        <Card className="mb-8">
+        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-slate-600" />
+              <FileText className="h-5 w-5 text-blue-600" />
               考试须知
             </h2>
-            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r mb-4">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-4 rounded-r mb-4">
               <h3 className="font-semibold text-amber-800 mb-2">重要提醒</h3>
               <ul className="list-disc list-inside text-amber-700 space-y-1 text-sm">
                 <li>请选择您对应的作业类型进行考试</li>
@@ -110,39 +110,39 @@ export default function HomePage() {
           {workTypes.map((wt) => (
             <Card 
               key={wt.id}
-              className={`hover:shadow-lg transition-all cursor-pointer border-2 hover:border-blue-300 overflow-hidden`}
+              className={`hover:shadow-xl transition-all cursor-pointer border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:scale-[1.02]`}
               onClick={() => handleStartExam(wt.id)}
             >
-              <div className={`h-2 ${wt.bgColor.replace('100', '500')}`}></div>
+              <div className={`h-2 bg-gradient-to-r ${wt.bgColor.replace('100', '400').replace('bg-', 'from-').replace('-100', '-400')} to-${wt.color.split('-')[1]}-300`}></div>
               <CardContent className="p-6">
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${wt.bgColor}`}>
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 bg-gradient-to-br ${wt.bgColor} shadow-lg`}>
                   {getIcon(wt.icon, `h-7 w-7 ${wt.color}`)}
                 </div>
                 <h3 className="font-bold text-lg text-slate-800 mb-2">{wt.name}</h3>
                 <CardDescription className="mb-4 text-sm">{wt.description}</CardDescription>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                  <span className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 px-2 py-1 rounded">
                     {wt.questionCount.choice}选择题
                   </span>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                  <span className="text-xs bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 px-2 py-1 rounded">
                     {wt.questionCount.judge}判断题
                   </span>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                  <span className="text-xs bg-gradient-to-r from-purple-50 to-pink-50 text-purple-600 px-2 py-1 rounded">
                     {wt.questionCount.fill}填空题
                   </span>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">开始考试</Button>
+                <Button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">开始考试</Button>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* 管理端入口 */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-xl transition-all bg-gradient-to-r from-white to-blue-50 border-0">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <Users className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                <Users className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h3 className="font-semibold text-lg">管理端</h3>
@@ -156,15 +156,15 @@ export default function HomePage() {
         </Card>
 
         {/* 底部说明 */}
-        <div className="mt-8 text-center text-slate-400 text-sm">
+        <div className="mt-8 text-center text-slate-500 text-sm">
           <p>请确保在安静、光线充足的环境中进行考试</p>
         </div>
 
         {/* 版权保护信息 - 蓝色主题，左上角DEC标识 */}
         <div className="mt-12">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-xl overflow-hidden shadow-xl">
             {/* 顶部蓝色标识条 - 左上角DEC */}
-            <div className="bg-blue-700 px-4 py-3">
+            <div className="bg-blue-800/50 px-4 py-3">
               <div className="flex items-center gap-3">
                 {/* DEC椭圆Logo */}
                 <svg width="40" height="24" viewBox="0 0 36 22">

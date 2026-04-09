@@ -190,11 +190,11 @@ export default function AdminPage() {
   // ==================== 登录页面 ====================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-sm w-full shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+        <Card className="max-w-sm w-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="h-8 w-8 text-blue-600" />
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Users className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-xl">管理端登录</CardTitle>
             <p className="text-slate-500 text-sm mt-1">请输入管理员密码</p>
@@ -208,7 +208,7 @@ export default function AdminPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               className="h-12 text-center"
             />
-            <Button onClick={handleLogin} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleLogin} className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">
               登录
             </Button>
             <Button variant="outline" onClick={() => router.push('/')} className="w-full">
@@ -218,8 +218,8 @@ export default function AdminPage() {
           </CardContent>
           
           {/* 版权保护信息 - 蓝色主题 */}
-          <div className="mx-6 mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg overflow-hidden">
-            <div className="bg-blue-700 px-4 py-2">
+          <div className="mx-6 mb-6 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-lg overflow-hidden shadow-lg">
+            <div className="bg-blue-800/50 px-4 py-2">
               <div className="flex items-center gap-2">
                 <svg width="28" height="17" viewBox="0 0 36 22">
                   <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
@@ -245,10 +245,10 @@ export default function AdminPage() {
     const stats = getAnswerStats(answers);
 
     return (
-      <div className="min-h-screen bg-slate-50">
-        <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <header className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 text-white shadow-lg">
           {/* DEC品牌标识条 - 蓝色主题，左上角DEC */}
-          <div className="bg-blue-700">
+          <div className="bg-blue-800/50">
             <div className="max-w-5xl mx-auto px-4 py-2">
               <div className="flex items-center gap-2">
                 {/* DEC椭圆Logo */}
@@ -478,10 +478,10 @@ export default function AdminPage() {
 
   // ==================== 记录列表页面 ====================
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <header className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 text-white shadow-lg">
         {/* DEC品牌标识条 - 蓝色主题，左上角DEC */}
-        <div className="bg-blue-700">
+        <div className="bg-blue-800/50">
           <div className="max-w-6xl mx-auto px-4 py-2">
             <div className="flex items-center gap-2">
               {/* DEC椭圆Logo */}
@@ -515,7 +515,7 @@ export default function AdminPage() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* 统计卡片 */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card>
+          <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Users className="h-6 w-6 text-blue-600" />

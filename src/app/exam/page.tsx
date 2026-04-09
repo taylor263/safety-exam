@@ -29,16 +29,18 @@ function DecHeader({ title, subtitle, onBack, showBack = true, sticky = false }:
 }) {
   const HeaderContent = () => (
     <>
-      {/* DEC标识条 */}
-      <div className="bg-red-700">
-        <div className={`mx-auto px-4 py-1.5 flex items-center justify-between ${sticky ? 'max-w-2xl' : 'max-w-4xl'}`}>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-red-600 font-bold text-sm">DEC</span>
-            </div>
-            <span className="text-xs text-red-100">东方电气精细电子材料</span>
+      {/* DEC标识条 - 蓝色主题 */}
+      <div className="bg-blue-800/50">
+        <div className={`mx-auto px-4 py-2 flex items-center gap-2 ${sticky ? 'max-w-2xl' : 'max-w-4xl'}`}>
+          {/* DEC椭圆Logo */}
+          <svg width="28" height="17" viewBox="0 0 36 22">
+            <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+            <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">DEC</text>
+          </svg>
+          <div className="text-left">
+            <div className="text-xs font-bold text-white leading-tight">东方电气</div>
+            <div className="text-xs text-blue-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
           </div>
-          <span className="text-xs text-red-200">安全管理</span>
         </div>
       </div>
       {/* 标题栏 */}
@@ -63,14 +65,14 @@ function DecHeader({ title, subtitle, onBack, showBack = true, sticky = false }:
 
   if (sticky) {
     return (
-      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white sticky top-0 z-10">
+      <header className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 text-white sticky top-0 z-10 shadow-lg">
         <HeaderContent />
       </header>
     );
   }
 
   return (
-    <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+    <header className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 text-white shadow-lg">
       <HeaderContent />
     </header>
   );
@@ -266,7 +268,7 @@ function ExamContent() {
     };
 
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <DecHeader 
           title="安全生产培训考核" 
           subtitle="请选择考试模块" 
@@ -274,7 +276,7 @@ function ExamContent() {
         />
 
         <main className="max-w-4xl mx-auto px-4 py-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+          <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-200 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <Smartphone className="h-5 w-5 text-blue-600" />
             </div>
@@ -291,19 +293,19 @@ function ExamContent() {
                 className={`cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-300 overflow-hidden`}
                 onClick={() => handleSelectModule(wt.id)}
               >
-                <div className={`h-1 ${wt.bgColor.replace('100', '500')}`}></div>
+                <div className={`h-1 bg-gradient-to-r ${wt.bgColor.replace('100', '400').replace('bg-', 'from-').replace('-100', '-400')} to-${wt.color.split('-')[1]}-300`}></div>
                 <CardContent className="p-6">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${wt.bgColor}`}>
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 bg-gradient-to-br ${wt.bgColor} shadow-lg`}>
                     {getIcon(wt.icon, `h-7 w-7 ${wt.color}`)}
                   </div>
                   <h3 className="font-bold text-lg text-slate-800 mb-2">{wt.name}</h3>
                   <p className="text-slate-500 text-sm mb-4">{wt.description}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.choice}选择题</span>
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.judge}判断题</span>
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.fill}填空题</span>
+                    <span className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 px-2 py-1 rounded">{wt.questionCount.choice}选择题</span>
+                    <span className="text-xs bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 px-2 py-1 rounded">{wt.questionCount.judge}判断题</span>
+                    <span className="text-xs bg-gradient-to-r from-purple-50 to-pink-50 text-purple-600 px-2 py-1 rounded">{wt.questionCount.fill}填空题</span>
                   </div>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">选择</Button>
+                  <Button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">选择</Button>
                 </CardContent>
               </Card>
             ))}
@@ -316,7 +318,7 @@ function ExamContent() {
   // ==================== 信息填写页面 ====================
   if (phase === 'info') {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <DecHeader 
           title="个人信息填写" 
           subtitle={`考试模块：${currentModule?.name}`}
@@ -324,7 +326,7 @@ function ExamContent() {
         />
 
         <main className="max-w-md mx-auto px-4 py-6">
-          <Card className="shadow-sm">
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-center text-xl">请填写个人信息</CardTitle>
               <p className="text-center text-slate-500 text-sm">带 * 号为必填项</p>
@@ -369,7 +371,7 @@ function ExamContent() {
                   className="mt-1 h-12"
                 />
               </div>
-              <Button onClick={handleStartExam} className="w-full h-12 mt-4 bg-blue-600 hover:bg-blue-700 text-base font-medium">
+              <Button onClick={handleStartExam} className="w-full h-12 mt-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-base font-medium shadow-md">
                 开始考试
               </Button>
             </CardContent>
@@ -382,15 +384,15 @@ function ExamContent() {
   // ==================== 提交成功页面 ====================
   if (phase === 'submit' && submitResult) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-sm w-full text-center shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+        <Card className="max-w-sm w-full text-center shadow-xl border-0 bg-white/90 backdrop-blur-sm">
           <CardContent className="pt-8 pb-6">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-10 w-10 text-green-600" />
+            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <CheckCircle className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-green-600 mb-2">提交成功！</h2>
             <p className="text-slate-500 mb-4">您的考试已成功提交</p>
-            <div className="bg-slate-100 rounded-xl p-6 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-6">
               <div className="text-5xl font-bold text-blue-600">{submitResult.score}分</div>
               <p className="text-slate-500 text-sm mt-1">您的考试成绩</p>
             </div>
@@ -399,7 +401,7 @@ function ExamContent() {
               <p>公司：{userInfo.companyName}</p>
               <p>模块：{currentModule?.name}</p>
             </div>
-            <Button onClick={() => router.push('/')} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => router.push('/')} className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">
               返回首页
             </Button>
           </CardContent>
@@ -411,8 +413,8 @@ function ExamContent() {
   // ==================== 提交中页面 ====================
   if (phase === 'submit' && isSubmitting) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Card className="max-w-sm mx-auto text-center p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <Card className="max-w-sm mx-auto text-center p-8 shadow-lg border-0 bg-white/90 backdrop-blur-sm">
           <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
           <h2 className="text-xl font-bold">正在提交...</h2>
           <p className="text-slate-500 mt-2">请勿关闭页面</p>
@@ -431,7 +433,7 @@ function ExamContent() {
         />
 
         <main className="max-w-lg mx-auto px-4 py-6">
-          <Card className="shadow-sm">
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Camera className="h-5 w-5" />
@@ -439,7 +441,7 @@ function ExamContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-amber-50 border-l-4 border-amber-500 p-3 rounded text-sm">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-3 rounded text-sm">
                 <p className="text-amber-800 font-medium">请确保照片清晰显示：</p>
                 <ul className="list-disc list-inside text-amber-700 mt-1">
                   <li>您本人的面部</li>
@@ -454,7 +456,7 @@ function ExamContent() {
                     <Button variant="outline" onClick={() => setPhoto(null)} className="flex-1 h-12">
                       重新拍摄
                     </Button>
-                    <Button onClick={handleSubmit} className="flex-1 h-12 bg-green-600 hover:bg-green-700">
+                    <Button onClick={handleSubmit} className="flex-1 h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md">
                       <Send className="h-4 w-4 mr-2" />
                       确认提交
                     </Button>
@@ -468,12 +470,12 @@ function ExamContent() {
                     </div>
                   )}
                   
-                  <div className="bg-slate-100 rounded-lg overflow-hidden">
+                  <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
                     <video ref={videoRef} autoPlay playsInline muted className="w-full" />
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                   
-                  <Button onClick={takePhoto} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={takePhoto} className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">
                     <Camera className="h-5 w-5 mr-2" />
                     拍照
                   </Button>
@@ -504,8 +506,8 @@ function ExamContent() {
           </Card>
           
           {/* 版权保护信息 - 蓝色主题 */}
-          <div className="mt-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg overflow-hidden">
-            <div className="bg-blue-700 px-4 py-2">
+          <div className="mt-6 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-xl overflow-hidden shadow-lg">
+            <div className="bg-blue-800/50 px-4 py-2">
               <div className="flex items-center gap-2">
                 <svg width="28" height="17" viewBox="0 0 36 22">
                   <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
@@ -533,11 +535,11 @@ function ExamContent() {
   const questionScore = currentQuestion.type === 'choice' ? '5分' : currentQuestion.type === 'judge' ? '3分' : '6分';
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* 答题页面专用Header - 蓝色主题 */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white sticky top-0 z-10">
+      <header className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 text-white sticky top-0 z-10 shadow-lg">
         {/* DEC品牌标识条 - 左上角DEC */}
-        <div className="bg-blue-700">
+        <div className="bg-blue-800/50">
           <div className="max-w-2xl mx-auto px-4 py-2">
             <div className="flex items-center gap-2">
               {/* DEC椭圆Logo */}
@@ -571,7 +573,7 @@ function ExamContent() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4">
-        <Card className="shadow-sm">
+        <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg">
@@ -597,8 +599,8 @@ function ExamContent() {
                     onClick={() => setAnswers({ ...answers, [currentQuestion.id]: option[0] })}
                     className={`w-full p-4 rounded-xl border-2 text-left text-base transition-all ${
                       answers[currentQuestion.id] === option[0]
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
-                        : 'border-slate-200 hover:border-blue-300'
+                        ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-medium'
+                        : 'border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50/50'
                     }`}
                   >
                     {option}
@@ -614,8 +616,8 @@ function ExamContent() {
                   onClick={() => setAnswers({ ...answers, [currentQuestion.id]: '正确' })}
                   className={`p-6 rounded-xl border-2 text-center text-lg transition-all ${
                     answers[currentQuestion.id] === '正确'
-                      ? 'border-green-500 bg-green-50 text-green-700 font-bold'
-                      : 'border-slate-200 hover:border-green-300'
+                      ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 text-green-700 font-bold'
+                      : 'border-slate-200 hover:border-green-300 bg-white hover:bg-green-50/50'
                   }`}
                 >
                   <span className="text-2xl block mb-1">✓</span>
@@ -625,8 +627,8 @@ function ExamContent() {
                   onClick={() => setAnswers({ ...answers, [currentQuestion.id]: '错误' })}
                   className={`p-6 rounded-xl border-2 text-center text-lg transition-all ${
                     answers[currentQuestion.id] === '错误'
-                      ? 'border-red-500 bg-red-50 text-red-700 font-bold'
-                      : 'border-slate-200 hover:border-red-300'
+                      ? 'border-red-500 bg-gradient-to-br from-red-50 to-orange-50 text-red-700 font-bold'
+                      : 'border-slate-200 hover:border-red-300 bg-white hover:bg-red-50/50'
                   }`}
                 >
                   <span className="text-2xl block mb-1">✗</span>
@@ -651,7 +653,7 @@ function ExamContent() {
                 variant="outline"
                 onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                 disabled={currentIndex === 0}
-                className="flex-1 h-12"
+                className="flex-1 h-12 shadow-sm"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 上一题
@@ -660,7 +662,7 @@ function ExamContent() {
               {currentIndex === examQuestions.length - 1 ? (
                 <Button
                   onClick={() => setPhase('camera')}
-                  className="flex-1 h-12 bg-green-600 hover:bg-green-700"
+                  className="flex-1 h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md"
                 >
                   完成答题
                   <Upload className="h-4 w-4 ml-2" />
@@ -668,7 +670,7 @@ function ExamContent() {
               ) : (
                 <Button
                   onClick={() => setCurrentIndex(currentIndex + 1)}
-                  className="flex-1 h-12"
+                  className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md"
                 >
                   下一题
                   <ArrowRight className="h-4 w-4 ml-2" />
