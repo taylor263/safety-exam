@@ -19,6 +19,63 @@ interface UserInfo {
   examModule: WorkType;
 }
 
+// DEC 东方电气标识 Header 组件
+function DecHeader({ title, subtitle, onBack, showBack = true, sticky = false }: { 
+  title: string; 
+  subtitle?: string; 
+  onBack?: () => void;
+  showBack?: boolean;
+  sticky?: boolean;
+}) {
+  const HeaderContent = () => (
+    <>
+      {/* DEC标识条 */}
+      <div className="bg-red-700">
+        <div className={`mx-auto px-4 py-1.5 flex items-center justify-between ${sticky ? 'max-w-2xl' : 'max-w-4xl'}`}>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+              <span className="text-red-600 font-bold text-sm">DEC</span>
+            </div>
+            <span className="text-xs text-red-100">东方电气精细电子材料</span>
+          </div>
+          <span className="text-xs text-red-200">安全管理</span>
+        </div>
+      </div>
+      {/* 标题栏 */}
+      <div className={`px-4 py-4 ${sticky ? 'max-w-2xl mx-auto' : 'max-w-4xl mx-auto'}`}>
+        <div className="flex items-center gap-3">
+          {showBack && onBack && (
+            <Button variant="ghost" size="icon" onClick={onBack} className="text-white hover:bg-white/20 -ml-2">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="flex items-center gap-2">
+            <Shield className="h-6 w-6" />
+            <div>
+              <h1 className="text-lg font-bold">{title}</h1>
+              {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  if (sticky) {
+    return (
+      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white sticky top-0 z-10">
+        <HeaderContent />
+      </header>
+    );
+  }
+
+  return (
+    <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+      <HeaderContent />
+    </header>
+  );
+}
+
 interface Answers {
   [key: string]: string;
 }
@@ -210,17 +267,11 @@ function ExamContent() {
 
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-blue-600 text-white">
-          <div className="max-w-4xl mx-auto px-4 py-6 flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-white hover:bg-white/20">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">安全生产培训考核</h1>
-              <p className="text-xs text-blue-200">请选择考试模块</p>
-            </div>
-          </div>
-        </header>
+        <DecHeader 
+          title="安全生产培训考核" 
+          subtitle="请选择考试模块" 
+          onBack={() => router.push('/')} 
+        />
 
         <main className="max-w-4xl mx-auto px-4 py-6">
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center gap-3">
@@ -266,17 +317,11 @@ function ExamContent() {
   if (phase === 'info') {
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-blue-600 text-white">
-          <div className="max-w-md mx-auto px-4 py-6 flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => setPhase('select')} className="text-white hover:bg-white/20">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">个人信息填写</h1>
-              <p className="text-xs text-blue-200">考试模块：{currentModule?.name}</p>
-            </div>
-          </div>
-        </header>
+        <DecHeader 
+          title="个人信息填写" 
+          subtitle={`考试模块：${currentModule?.name}`}
+          onBack={() => setPhase('select')} 
+        />
 
         <main className="max-w-md mx-auto px-4 py-6">
           <Card className="shadow-sm">
@@ -380,14 +425,10 @@ function ExamContent() {
   if (phase === 'camera') {
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-blue-600 text-white">
-          <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => setPhase('exam')} className="text-white hover:bg-white/20">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold">上传答题凭证</h1>
-          </div>
-        </header>
+        <DecHeader 
+          title="上传答题凭证" 
+          onBack={() => setPhase('exam')} 
+        />
 
         <main className="max-w-lg mx-auto px-4 py-6">
           <Card className="shadow-sm">
@@ -475,7 +516,21 @@ function ExamContent() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-blue-600 text-white sticky top-0 z-10">
+      {/* 答题页面专用Header */}
+      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white sticky top-0 z-10">
+        {/* DEC标识条 */}
+        <div className="bg-red-700">
+          <div className="max-w-2xl mx-auto px-4 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                <span className="text-red-600 font-bold text-sm">DEC</span>
+              </div>
+              <span className="text-xs text-red-100">安全生产培训</span>
+            </div>
+            <span className="text-xs text-red-200">安全管理</span>
+          </div>
+        </div>
+        {/* 进度条 */}
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">答题 {currentIndex + 1}/{examQuestions.length}</span>

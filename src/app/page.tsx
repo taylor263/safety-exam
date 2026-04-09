@@ -27,13 +27,26 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 头部 */}
-      <header className="bg-blue-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+        {/* DEC标识条 */}
+        <div className="bg-red-700">
+          <div className="max-w-4xl mx-auto px-4 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                <span className="text-red-600 font-bold text-sm">DEC</span>
+              </div>
+              <span className="text-xs text-red-100">东方电气精细电子材料</span>
+            </div>
+            <span className="text-xs text-red-200">安全管理</span>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 py-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
             <Shield className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">安全生产培训考核系统</h1>
+            <h1 className="text-xl font-bold">东方电气精细电子材料有限公司</h1>
           </div>
-          <p className="text-blue-100">特殊作业安全常识在线考试</p>
+          <p className="text-white/90 font-medium">安全生产培训考核系统</p>
+          <p className="text-white/70 text-sm mt-1">特殊作业安全常识在线考试</p>
         </div>
       </header>
 

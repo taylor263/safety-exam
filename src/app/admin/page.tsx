@@ -228,7 +228,19 @@ export default function AdminPage() {
 
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-blue-600 text-white">
+        <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+          {/* DEC标识条 */}
+          <div className="bg-red-700">
+            <div className="max-w-5xl mx-auto px-4 py-1.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                  <span className="text-red-600 font-bold text-sm">DEC</span>
+                </div>
+                <span className="text-xs text-red-100">安全生产培训 - 管理端</span>
+              </div>
+              <span className="text-xs text-red-200">考试成绩管理</span>
+            </div>
+          </div>
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setSelectedRecord(null)} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
@@ -445,7 +457,19 @@ export default function AdminPage() {
   // ==================== 记录列表页面 ====================
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-blue-600 text-white">
+      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+        {/* DEC标识条 */}
+        <div className="bg-red-700">
+          <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                <span className="text-red-600 font-bold text-sm">DEC</span>
+              </div>
+              <span className="text-xs text-red-100">安全生产培训 - 管理端</span>
+            </div>
+            <span className="text-xs text-red-200">考试成绩管理</span>
+          </div>
+        </div>
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-white hover:bg-white/20">
