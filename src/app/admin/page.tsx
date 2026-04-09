@@ -206,122 +206,155 @@ export default function AdminPage() {
     }
 
     try {
-      // 动态导入 jsPDF
-      const { default: jsPDF } = await import('jspdf');
+      // 动态导入库
+      const [html2canvasModule, jsPDFModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+      const html2canvas = html2canvasModule.default;
+      const { jsPDF } = jsPDFModule;
       
-      filteredRecords.forEach((record) => {
+      // 创建隐藏容器
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '800px';
+      container.style.background = '#fff';
+      container.style.padding = '20px';
+      container.style.fontFamily = 'Microsoft YaHei, SimSun, sans-serif';
+      document.body.appendChild(container);
+
+      const typeNameMap: Record<string, string> = {
+        'choice': '选择题',
+        'judge': '判断题',
+        'fill': '填空题'
+      };
+
+      for (let i = 0; i < filteredRecords.length; i++) {
+        const record = filteredRecords[i];
         const answers = parseAnswers(record.answers);
-        if (!Array.isArray(answers) || answers.length === 0) return;
+        if (!Array.isArray(answers) || answers.length === 0) continue;
         
-        const doc = new jsPDF();
         const examModule = getModuleName(record.exam_module);
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
         
-        // 标题
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('安全生产培训考核试卷', 105, 20, { align: 'center' });
-        
-        // 考生信息
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`姓名：${record.name}`, 20, 35);
-        doc.text(`公司：${record.work_type}`, 20, 42);
-        doc.text(`模块：${examModule}`, 20, 49);
-        doc.text(`时间：${formatDate(record.submitted_at)}`, 20, 56);
-        doc.text(`成绩：${record.score}分`, 120, 35);
-        doc.text(`及格：${record.score >= 80 ? '是' : '否'}`, 120, 42);
-        
-        // 分隔线
-        doc.setLineWidth(0.5);
-        doc.line(20, 62, 190, 62);
-        
-        // 答题内容
-        let yPos = 72;
-        const pageHeight = 280;
-        
+        // 构建HTML内容
+        let htmlContent = `
+          <div style="max-width: 800px; margin: 0 auto; font-family: Microsoft YaHei, SimSun, sans-serif;">
+            <h1 style="text-align: center; font-size: 24px; color: #1e40af; margin-bottom: 20px;">安全生产培训考核试卷</h1>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+              <div>
+                <p><strong>姓名：</strong>${record.name}</p>
+                <p><strong>公司：</strong>${record.work_type}</p>
+                <p><strong>模块：</strong>${examModule}</p>
+                <p><strong>时间：</strong>${formatDate(record.submitted_at)}</p>
+              </div>
+              <div style="text-align: right;">
+                <p><strong>成绩：</strong><span style="font-size: 24px; color: ${record.score >= 80 ? '#16a34a' : '#dc2626'};">${record.score}分</span></p>
+                <p><strong>及格：</strong>${record.score >= 80 ? '<span style="color: #16a34a;">是</span>' : '<span style="color: #dc2626;">否</span>'}</p>
+              </div>
+            </div>
+            <hr style="border: 1px solid #e2e8f0; margin: 20px 0;"/>
+        `;
+
         answers.forEach((answer, index) => {
-          // 检查是否需要新页面
-          if (yPos > pageHeight - 40) {
-            doc.addPage();
-            yPos = 20;
-          }
+          const typeName = typeNameMap[answer.type || ''] || '未知';
+          const resultColor = answer.isCorrect ? '#16a34a' : '#dc2626';
           
-          const typeName = answer.type === 'choice' ? '【选择题】' : 
-                          answer.type === 'judge' ? '【判断题】' : '【填空题】';
-          const isCorrect = answer.isCorrect ? '✓' : '✗';
-          
-          // 题号和类型
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${index + 1}. ${typeName}`, 20, yPos);
-          
-          // 题目内容
-          doc.setFont('helvetica', 'normal');
-          yPos += 6;
-          const questionLines = doc.splitTextToSize(answer.question || '', 170);
-          doc.text(questionLines, 20, yPos);
-          yPos += questionLines.length * 5;
-          
-          // 如果是选择题，显示选项
+          let optionsHtml = '';
           if (answer.type === 'choice' && answer.options && Array.isArray(answer.options)) {
-            answer.options.forEach((opt: string, optIdx: number) => {
+            optionsHtml = answer.options.map((opt, optIdx) => {
               const letter = String.fromCharCode(65 + optIdx);
-              if (yPos > pageHeight - 10) {
-                doc.addPage();
-                yPos = 20;
-              }
-              doc.text(`${letter}. ${opt}`, 25, yPos);
-              yPos += 5;
-            });
-            yPos += 2;
+              const isUserChoice = answer.userAnswer?.toUpperCase() === letter;
+              const isCorrectChoice = answer.correctAnswer?.toUpperCase() === letter;
+              let style = 'padding: 5px 10px; margin: 3px 0;';
+              if (isCorrectChoice) style += ' background: #dcfce7; color: #16a34a; font-weight: bold;';
+              else if (isUserChoice) style += ' background: #fee2e2; color: #dc2626;';
+              return `<div style="${style}">${letter}. ${opt}</div>`;
+            }).join('');
           }
-          
-          // 用户答案和正确答案
-          if (yPos > pageHeight - 15) {
-            doc.addPage();
-            yPos = 20;
-          }
-          
-          let userAnsText = answer.userAnswer || '未作答';
-          let correctAnsText = answer.correctAnswer || '';
-          
-          // 如果是选择题，转换答案字母为选项文本
+
+          let userAnsDisplay = answer.userAnswer || '未作答';
+          let correctAnsDisplay = answer.correctAnswer || '';
           if (answer.type === 'choice' && answer.options) {
             const userIdx = ['A','B','C','D'].indexOf(answer.userAnswer?.toUpperCase() || '');
             const correctIdx = ['A','B','C','D'].indexOf(answer.correctAnswer?.toUpperCase() || '');
             if (userIdx >= 0 && answer.options[userIdx]) {
-              userAnsText = `${answer.userAnswer}. ${answer.options[userIdx]}`;
+              userAnsDisplay = `${answer.userAnswer}. ${answer.options[userIdx]}`;
             }
             if (correctIdx >= 0 && answer.options[correctIdx]) {
-              correctAnsText = `${answer.correctAnswer}. ${answer.options[correctIdx]}`;
+              correctAnsDisplay = `${answer.correctAnswer}. ${answer.options[correctIdx]}`;
             }
           }
-          
-          doc.setTextColor(answer.isCorrect ? 0 : 255, answer.isCorrect ? 128 : 0, 0);
-          doc.text(`你的答案：${userAnsText}`, 25, yPos);
-          yPos += 5;
-          doc.text(`正确答案：${correctAnsText}`, 25, yPos);
-          yPos += 5;
-          
-          // 是否正确
-          doc.text(`结果：${isCorrect}`, 25, yPos);
-          doc.setTextColor(0, 0, 0);
-          yPos += 6;
-          
-          // 分隔线
-          doc.setDrawColor(200, 200, 200);
-          doc.line(20, yPos, 190, yPos);
-          yPos += 6;
+
+          htmlContent += `
+            <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <p style="margin: 0 0 10px 0;"><strong>${index + 1}. 【${typeName}】</strong></p>
+              <p style="margin: 0 0 10px 0; line-height: 1.6;">${answer.question || ''}</p>
+              ${optionsHtml ? `<div style="margin: 10px 0;">${optionsHtml}</div>` : ''}
+              <div style="margin-top: 10px; padding: 10px; background: ${answer.isCorrect ? '#f0fdf4' : '#fef2f2'}; border-radius: 4px;">
+                <p style="margin: 3px 0;"><strong>你的答案：</strong><span style="color: ${resultColor};">${userAnsDisplay}</span></p>
+                ${answer.type !== 'judge' ? `<p style="margin: 3px 0;"><strong>正确答案：</strong><span style="color: #16a34a;">${correctAnsDisplay}</span></p>` : ''}
+                <p style="margin: 3px 0;"><strong>结果：</strong><span style="color: ${resultColor};">${answer.isCorrect ? '✓ 正确' : '✗ 错误'}</span></p>
+                ${answer.explanation ? `<p style="margin: 5px 0 0 0; font-size: 12px; color: #64748b;"><strong>解析：</strong>${answer.explanation}</p>` : ''}
+              </div>
+            </div>
+          `;
         });
-        
+
+        htmlContent += '</div>';
+        container.innerHTML = htmlContent;
+
+        // 等待DOM更新
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // 使用html2canvas渲染
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        // 创建PDF
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // 添加第一页
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // 添加后续页面
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
         // 保存文件
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
         const filename = `考试试卷_${record.name}_${dateStr}.pdf`;
-        doc.save(filename);
+        pdf.save(filename);
         console.log('PDF导出成功:', filename);
-      });
-      
+        
+        // 清除当前内容，准备下一个
+        container.innerHTML = '';
+      }
+
+      // 清理
+      document.body.removeChild(container);
       alert(`已导出 ${filteredRecords.length} 份试卷PDF`);
     } catch (err) {
       console.error('PDF导出失败', err);
