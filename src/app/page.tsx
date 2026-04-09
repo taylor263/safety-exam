@@ -27,24 +27,20 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 头部 */}
-      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
-        {/* DEC品牌标识条 */}
-        <div className="bg-red-700">
-          <div className="max-w-4xl mx-auto px-4 py-2">
-            <div className="flex items-center justify-center gap-4">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+        {/* DEC品牌标识条 - 蓝色主题，左上角DEC */}
+        <div className="bg-blue-700">
+          <div className="max-w-4xl mx-auto px-4 py-3">
+            <div className="flex items-center gap-3">
               {/* DEC椭圆Logo */}
-              <div className="flex items-center">
-                <svg width="36" height="22" viewBox="0 0 36 22" className="mr-2">
-                  <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
-                  <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="serif">DEC</text>
-                </svg>
-                <div className="text-left">
-                  <div className="text-sm font-bold text-white leading-tight">东方电气</div>
-                  <div className="text-xs text-red-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
-                </div>
+              <svg width="40" height="24" viewBox="0 0 36 22">
+                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">DEC</text>
+              </svg>
+              <div className="text-left">
+                <div className="text-sm font-bold text-white leading-tight">东方电气</div>
+                <div className="text-xs text-blue-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
               </div>
-              <div className="h-8 w-px bg-red-500"></div>
-              <span className="text-xs text-red-100">安全生产培训</span>
             </div>
           </div>
         </div>
