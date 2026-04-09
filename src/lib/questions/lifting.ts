@@ -1,4 +1,5 @@
 // 吊装作业安全常识题库
+// 总分：10选择题(5分) + 10判断题(3分) + 5填空题(6分) = 100分
 
 export interface Question {
   id: string;
@@ -11,7 +12,7 @@ export interface Question {
 }
 
 export const liftingQuestions: Question[] = [
-  // ==================== 选择题 (5道) ====================
+  // ==================== 选择题 (10道) ====================
   {
     id: 'lift_choice_001',
     type: 'choice',
@@ -57,8 +58,53 @@ export const liftingQuestions: Question[] = [
     answer: 'B',
     explanation: '钢丝绳的安全系数一般应大于5，确保吊装安全。'
   },
+  {
+    id: 'lift_choice_006',
+    type: 'choice',
+    category: '吊装作业',
+    question: '吊装作业前应清除作业区域多大范围内的障碍物？',
+    options: ['A. 3米', 'B. 5米', 'C. 10米', 'D. 15米'],
+    answer: 'B',
+    explanation: '吊装作业前应清除作业区域5米范围内的障碍物，确保通道畅通。'
+  },
+  {
+    id: 'lift_choice_007',
+    type: 'choice',
+    category: '吊装作业',
+    question: '吊装作业时，吊物距离地面最大高度一般不超过多少米？',
+    options: ['A. 1米', 'B. 2米', 'C. 3米', 'D. 5米'],
+    answer: 'C',
+    explanation: '吊物距离地面最大高度一般不超过3米，便于观察和操作。'
+  },
+  {
+    id: 'lift_choice_008',
+    type: 'choice',
+    category: '吊装作业',
+    question: '吊装作业使用的吊钩上应设置什么装置？',
+    options: ['A. 警报器', 'B. 防脱装置', 'C. 照明灯', 'D. 计数器'],
+    answer: 'B',
+    explanation: '吊钩上应设置防脱装置，防止吊物脱落造成事故。'
+  },
+  {
+    id: 'lift_choice_009',
+    type: 'choice',
+    category: '吊装作业',
+    question: '以下哪种物品可以用吊车直接吊运？',
+    options: ['A. 人员', 'B. 埋在地下的物体', 'C. 形状规则的货物', 'D. 带电的电缆'],
+    answer: 'C',
+    explanation: '只有形状规则、捆绑牢固的货物才能吊运，严禁吊人、埋地物、带电物。'
+  },
+  {
+    id: 'lift_choice_010',
+    type: 'choice',
+    category: '吊装作业',
+    question: '吊装作业指挥信号中，起重机驾驶员应该以谁的指令为准？',
+    options: ['A. 任意人员', 'B. 专职指挥人员', 'C. 围观人员', 'D. 领导口头指示'],
+    answer: 'B',
+    explanation: '起重机驾驶员应只听从专职指挥人员的指令，确保统一指挥。'
+  },
 
-  // ==================== 判断题 (5道) ====================
+  // ==================== 判断题 (10道) ====================
   {
     id: 'lift_judge_001',
     type: 'judge',
@@ -99,8 +145,48 @@ export const liftingQuestions: Question[] = [
     answer: '错误',
     explanation: '被吊物上严禁站人，必须确认无人后方可起吊。'
   },
+  {
+    id: 'lift_judge_006',
+    type: 'judge',
+    category: '吊装作业',
+    question: '吊装作业时，吊物下方可以短暂停留。',
+    answer: '错误',
+    explanation: '吊物下方严禁人员停留或通过，必须设置警戒区域。'
+  },
+  {
+    id: 'lift_judge_007',
+    type: 'judge',
+    category: '吊装作业',
+    question: '吊装作业前应检查钢丝绳是否有断丝、断股现象。',
+    answer: '正确',
+    explanation: '钢丝绳有断丝、断股现象必须更换，否则容易断裂造成事故。'
+  },
+  {
+    id: 'lift_judge_008',
+    type: 'judge',
+    category: '吊装作业',
+    question: '吊装作业时，可以用吊钩钩挂物体。',
+    answer: '错误',
+    explanation: '严禁用吊钩直接钩挂物体，必须使用专用吊具进行捆绑。'
+  },
+  {
+    id: 'lift_judge_009',
+    type: 'judge',
+    category: '吊装作业',
+    question: '吊装作业完成后，应将吊钩升至安全高度并停放在指定位置。',
+    answer: '正确',
+    explanation: '作业完成后应将吊钩升至安全高度，停放在规定位置，防止意外。'
+  },
+  {
+    id: 'lift_judge_010',
+    type: 'judge',
+    category: '吊装作业',
+    question: '雷雨天气可以进行小型吊装作业。',
+    answer: '错误',
+    explanation: '雷雨天气禁止一切吊装作业，防止雷击和吊物坠落。'
+  },
 
-  // ==================== 填空题 (3道) ====================
+  // ==================== 填空题 (5道) ====================
   {
     id: 'lift_fill_001',
     type: 'fill',
@@ -124,6 +210,22 @@ export const liftingQuestions: Question[] = [
     question: '六级以上______天气禁止进行吊装作业。',
     answer: '强风',
     explanation: '强风天气吊物易失控坠落，必须停止作业。'
+  },
+  {
+    id: 'lift_fill_004',
+    type: 'fill',
+    category: '吊装作业',
+    question: '吊装作业应使用统一规定的指挥信号，由______人员指挥。',
+    answer: '专职',
+    explanation: '吊装作业必须由专职指挥人员统一指挥，确保安全。'
+  },
+  {
+    id: 'lift_fill_005',
+    type: 'fill',
+    category: '吊装作业',
+    question: '钢丝绳的安全系数应大于______。',
+    answer: '5',
+    explanation: '钢丝绳的安全系数一般应大于5，确保吊装安全。'
   }
 ];
 

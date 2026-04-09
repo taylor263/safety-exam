@@ -1,4 +1,5 @@
 // 受限空间作业安全常识题库
+// 总分：10选择题(5分) + 10判断题(3分) + 5填空题(6分) = 100分
 
 export interface Question {
   id: string;
@@ -11,7 +12,7 @@ export interface Question {
 }
 
 export const confinedSpaceQuestions: Question[] = [
-  // ==================== 选择题 (5道) ====================
+  // ==================== 选择题 (10道) ====================
   {
     id: 'cs_choice_001',
     type: 'choice',
@@ -57,8 +58,53 @@ export const confinedSpaceQuestions: Question[] = [
     answer: 'B',
     explanation: '日常设备巡检如不涉及特殊作业，可不办理许可证，但需做好安全确认。'
   },
+  {
+    id: 'cs_choice_006',
+    type: 'choice',
+    category: '受限空间作业',
+    question: '受限空间作业前必须对作业设备进行什么处理？',
+    options: ['A. 润滑保养', 'B. 可靠切断', 'C. 外观清洁', 'D. 性能测试'],
+    answer: 'B',
+    explanation: '作业前必须对相关设备进行断电、断气、断料等可靠切断，防止意外启动。'
+  },
+  {
+    id: 'cs_choice_007',
+    type: 'choice',
+    category: '受限空间作业',
+    question: '在受限空间内作业时，可以采用什么方式照明？',
+    options: ['A. 普通白炽灯', 'B. 安全电压的防爆灯具', 'C. 蜡烛或酒精灯', 'D. 手机手电筒'],
+    answer: 'B',
+    explanation: '受限空间内应使用安全电压的防爆灯具，禁止使用明火照明。'
+  },
+  {
+    id: 'cs_choice_008',
+    type: 'choice',
+    category: '受限空间作业',
+    question: '受限空间作业时，发现有人中毒应该首先怎么做？',
+    options: ['A. 立即进入救援', 'B. 拨打120并报告', 'C. 佩戴防毒面具后进入救援', 'D. 用风扇通风'],
+    answer: 'B',
+    explanation: '发现中毒应首先拨打120并报告，切勿盲目进入救援，防止连环中毒。'
+  },
+  {
+    id: 'cs_choice_009',
+    type: 'choice',
+    category: '受限空间作业',
+    question: '受限空间作业完成后，应首先做什么？',
+    options: ['A. 清理工具', 'B. 关闭出入口', 'C. 清点人数，确认所有人员已撤离', 'D. 恢复设备运行'],
+    answer: 'C',
+    explanation: '作业完成后应首先清点人数，确认所有人员已撤离，确保安全。'
+  },
+  {
+    id: 'cs_choice_010',
+    type: 'choice',
+    category: '受限空间作业',
+    question: '受限空间作业的气体检测顺序应该是？',
+    options: ['A. 先检测上部，再检测中部，最后检测下部', 'B. 先检测下部，再检测中部，最后检测上部', 'C. 随意检测', 'D. 只检测中部'],
+    answer: 'B',
+    explanation: '气体检测应先检测下部（比重较重的气体），再检测中部，最后检测上部。'
+  },
 
-  // ==================== 判断题 (5道) ====================
+  // ==================== 判断题 (10道) ====================
   {
     id: 'cs_judge_001',
     type: 'judge',
@@ -99,8 +145,48 @@ export const confinedSpaceQuestions: Question[] = [
     answer: '正确',
     explanation: '作业前必须对相关设备进行断电、断气、断料等可靠切断，防止意外启动。'
   },
+  {
+    id: 'cs_judge_006',
+    type: 'judge',
+    category: '受限空间作业',
+    question: '在有有害气体的受限空间作业时，作业人员可以不佩戴防护用品。',
+    answer: '错误',
+    explanation: '在有有害气体的受限空间作业时，必须佩戴相应的防护用品。'
+  },
+  {
+    id: 'cs_judge_007',
+    type: 'judge',
+    category: '受限空间作业',
+    question: '受限空间作业时，可以采取强制通风措施。',
+    answer: '正确',
+    explanation: '受限空间作业时应采取强制通风措施，确保空气流通。'
+  },
+  {
+    id: 'cs_judge_008',
+    type: 'judge',
+    category: '受限空间作业',
+    question: '救援人员进入受限空间救援时，可以不佩戴防护用品。',
+    answer: '错误',
+    explanation: '救援人员进入受限空间时，必须佩戴防护用品，防止中毒或窒息。'
+  },
+  {
+    id: 'cs_judge_009',
+    type: 'judge',
+    category: '受限空间作业',
+    question: '受限空间作业时，只需要在入口处设置警示标志即可。',
+    answer: '错误',
+    explanation: '需要设置专职监护人，持续监护作业过程，确保安全。'
+  },
+  {
+    id: 'cs_judge_010',
+    type: 'judge',
+    category: '受限空间作业',
+    question: '进入受限空间作业前，气体检测结果合格后方可进入。',
+    answer: '正确',
+    explanation: '气体检测合格是进入受限空间作业的必要前提条件。'
+  },
 
-  // ==================== 填空题 (3道) ====================
+  // ==================== 填空题 (5道) ====================
   {
     id: 'cs_fill_001',
     type: 'fill',
@@ -124,6 +210,22 @@ export const confinedSpaceQuestions: Question[] = [
     question: '受限空间作业许可证的有效期最长不超过______小时。',
     answer: '24',
     explanation: '许可证有效期最长24小时，超时需重新审批。'
+  },
+  {
+    id: 'cs_fill_004',
+    type: 'fill',
+    category: '受限空间作业',
+    question: '受限空间作业前应进行可靠的______，防止意外启动或能量释放。',
+    answer: '隔离',
+    explanation: '隔离措施包括断电、断气、断料等，确保设备不会意外启动。'
+  },
+  {
+    id: 'cs_fill_005',
+    type: 'fill',
+    category: '受限空间作业',
+    question: '在受限空间内作业时，应保持良好的______，必要时采取强制通风。',
+    answer: '通风',
+    explanation: '良好的通风是防止有毒有害气体积聚的重要措施。'
   }
 ];
 

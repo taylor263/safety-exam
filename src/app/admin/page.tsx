@@ -3,128 +3,101 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, Camera, Lock, Shield, Users, Zap, ShieldCheck } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { workTypes, type WorkType } from '@/lib/questions';
+import { 
+  ArrowLeft, Search, Users, CheckCircle, XCircle, 
+  Shield, Smartphone, Calendar, Eye, Clock
+} from 'lucide-react';
+import { workTypes } from '@/lib/questions';
 
 interface ExamRecord {
-  id: string;
-  work_type: string; // 公司名称
+  id: number;
+  work_type: string;
   name: string;
   id_card: string;
   phone: string;
-  exam_module: WorkType; // 考试模块
+  exam_module: string;
   score: number;
+  photo_key: string;
+  answers: string;
   submitted_at: string;
 }
-
-interface ExamDetail extends ExamRecord {
-  photo_url?: string;
-  answers?: Record<string, string>;
-}
-
-// 工种模块名称映射
-const moduleNameMap: Record<WorkType, string> = {
-  confined_space: '受限空间作业',
-  lifting: '吊装作业',
-  comprehensive: '动火/临时用电/高处',
-};
 
 export default function AdminPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
   const [records, setRecords] = useState<ExamRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [searchName, setSearchName] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState<ExamDetail | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-
-  const limit = 15;
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+  const [filteredRecords, setFilteredRecords] = useState<ExamRecord[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState<ExamRecord | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const authed = sessionStorage.getItem('admin_authenticated');
-    if (authed === 'true') {
+    const adminAuth = sessionStorage.getItem('admin_auth');
+    if (adminAuth === 'true') {
       setIsAuthenticated(true);
+      fetchRecords();
     }
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchRecords();
+    if (searchTerm) {
+      const filtered = records.filter(r => 
+        r.name.includes(searchTerm) ||
+        r.work_type.includes(searchTerm) ||
+        r.phone.includes(searchTerm) ||
+        r.id_card.includes(searchTerm)
+      );
+      setFilteredRecords(filtered);
+    } else {
+      setFilteredRecords(records);
     }
-  }, [page, isAuthenticated]);
+  }, [searchTerm, records]);
 
   const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
+    if (password === 'admin123') {
       setIsAuthenticated(true);
-      setAuthError('');
-      sessionStorage.setItem('admin_authenticated', 'true');
+      sessionStorage.setItem('admin_auth', 'true');
+      fetchRecords();
     } else {
-      setAuthError('密码错误，请重试');
+      alert('密码错误');
     }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setPassword('');
-    sessionStorage.removeItem('admin_authenticated');
   };
 
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/exam?page=${page}&limit=${limit}`);
-      const result = await response.json();
-      if (result.success) {
-        setRecords(result.data);
-        setTotal(result.total);
+      const response = await fetch('/api/exam');
+      const data = await response.json();
+      if (data.success) {
+        setRecords(data.data);
+        setFilteredRecords(data.data);
       }
     } catch (err) {
-      console.error('获取记录失败:', err);
+      console.error('获取记录失败', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRecordDetail = async (id: string) => {
-    setLoadingDetail(true);
-    try {
-      const response = await fetch(`/api/exam/records/${id}`);
-      const result = await response.json();
-      if (result.success) {
-        setSelectedRecord(result.data);
-      }
-    } catch (err) {
-      console.error('获取详情失败:', err);
-    } finally {
-      setLoadingDetail(false);
-    }
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_auth');
+    setIsAuthenticated(false);
+    setPassword('');
   };
 
-  const filteredRecords = searchName
-    ? records.filter(r => 
-        r.name.includes(searchName) || 
-        r.id_card.includes(searchName) || 
-        r.phone.includes(searchName) ||
-        r.work_type.includes(searchName)
-      )
-    : records;
+  const getModuleName = (module: string) => {
+    const wt = workTypes.find(w => w.id === module);
+    return wt?.name || module;
+  };
 
-  const totalPages = Math.ceil(total / limit);
+  const getScoreColor = (score: number) => {
+    if (score >= 60) return 'text-green-600 bg-green-50';
+    return 'text-red-600 bg-red-50';
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -133,326 +106,291 @@ export default function AdminPage() {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit',
+      minute: '2-digit'
     });
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'bg-green-100 text-green-800';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
-  };
-
-  const getModuleIcon = (module: WorkType) => {
-    switch (module) {
-      case 'confined_space':
-        return <ShieldCheck className="h-4 w-4" />;
-      case 'lifting':
-        return <Users className="h-4 w-4" />;
-      case 'comprehensive':
-        return <Zap className="h-4 w-4" />;
+  const parseAnswers = (answersStr: string) => {
+    try {
+      return JSON.parse(answersStr);
+    } catch {
+      return {};
     }
   };
 
-  // 登录页面
+  // ==================== 登录页面 ====================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="h-8 w-8 text-primary" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="max-w-sm w-full shadow-lg">
+          <CardHeader className="text-center pb-2">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="h-8 w-8 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl">管理端访问</CardTitle>
-            <p className="text-slate-500 text-sm mt-2">请输入访问密码</p>
+            <CardTitle className="text-xl">管理端登录</CardTitle>
+            <p className="text-slate-500 text-sm mt-1">请输入管理员密码</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                type="password"
-                placeholder="请输入密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                className="pl-10"
-              />
-            </div>
-            {authError && (
-              <p className="text-red-500 text-sm text-center">{authError}</p>
-            )}
-            <Button onClick={handleLogin} className="w-full">
+            <Input
+              type="password"
+              placeholder="请输入密码"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              className="h-12 text-center"
+            />
+            <Button onClick={handleLogin} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
               登录
             </Button>
             <Button variant="outline" onClick={() => router.push('/')} className="w-full">
+              <ArrowLeft className="h-4 w-4 mr-2" />
               返回首页
             </Button>
-            <p className="text-xs text-slate-400 text-center">
-              默认密码：admin123
-            </p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <header className="bg-primary text-primary-foreground py-4 shadow">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-primary-foreground hover:bg-primary-foreground/20">
+  // ==================== 详情弹窗 ====================
+  if (selectedRecord) {
+    const answers = parseAnswers(selectedRecord.answers);
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-blue-600 text-white">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedRecord(null)} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">考试成绩管理</h1>
+            <h1 className="text-lg font-bold">考试详情</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/20">
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>基本信息</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">姓名</p>
+                <p className="font-semibold">{selectedRecord.name}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">公司名称</p>
+                <p className="font-semibold text-sm">{selectedRecord.work_type}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">身份证号</p>
+                <p className="font-semibold text-sm font-mono">{selectedRecord.id_card}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">手机号</p>
+                <p className="font-semibold">{selectedRecord.phone}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">考试模块</p>
+                <p className="font-semibold text-sm">{getModuleName(selectedRecord.exam_module)}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">考试时间</p>
+                <p className="font-semibold text-sm">{formatDate(selectedRecord.submitted_at)}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg md:col-span-2">
+                <p className="text-xs text-slate-500 mb-1">成绩</p>
+                <div className="flex items-center gap-2">
+                  <span className={`text-3xl font-bold ${selectedRecord.score >= 60 ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedRecord.score}
+                  </span>
+                  <span className="text-slate-500">分</span>
+                  {selectedRecord.score >= 60 ? (
+                    <Badge className="bg-green-600">及格</Badge>
+                  ) : (
+                    <Badge className="bg-red-600">不及格</Badge>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>答题详情</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
+                <p className="text-amber-800 text-sm">
+                  <Clock className="h-4 w-4 inline mr-1" />
+                  以下为系统记录的用户答题内容，仅供参考
+                </p>
+              </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {Object.entries(answers).map(([questionId, answer], index) => (
+                  <div key={questionId} className="bg-slate-50 p-3 rounded-lg flex items-start gap-3">
+                    <span className="font-semibold text-slate-600">{index + 1}.</span>
+                    <span className="flex-1">{String(answer)}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // ==================== 记录列表页面 ====================
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-blue-600 text-white">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-white hover:bg-white/20">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-bold">考试成绩管理</h1>
+              <p className="text-xs text-blue-200">共 {records.length} 条记录</p>
+            </div>
+          </div>
+          <Button variant="secondary" onClick={handleLogout} className="bg-white/20 text-white hover:bg-white/30 border-0">
             退出登录
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle>考试记录列表</CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="搜索姓名/公司/电话"
-                    value={searchName}
-                    onChange={(e) => setSearchName(e.target.value)}
-                    className="pl-9 w-64"
-                  />
-                </div>
-                <Button variant="outline" size="icon" onClick={fetchRecords}>
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : filteredRecords.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                暂无考试记录
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>序号</TableHead>
-                        <TableHead>姓名</TableHead>
-                        <TableHead>公司名称</TableHead>
-                        <TableHead>考试模块</TableHead>
-                        <TableHead>身份证号</TableHead>
-                        <TableHead>电话</TableHead>
-                        <TableHead>分数</TableHead>
-                        <TableHead>提交时间</TableHead>
-                        <TableHead>操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRecords.map((record, index) => (
-                        <TableRow key={record.id}>
-                          <TableCell>{(page - 1) * limit + index + 1}</TableCell>
-                          <TableCell className="font-medium">{record.name}</TableCell>
-                          <TableCell>{record.work_type}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                              {getModuleIcon(record.exam_module)}
-                              {moduleNameMap[record.exam_module] || record.exam_module}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{record.id_card}</TableCell>
-                          <TableCell>{record.phone}</TableCell>
-                          <TableCell>
-                            <Badge className={getScoreColor(record.score)}>
-                              {record.score}分
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-slate-500">
-                            {formatDate(record.submitted_at)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => fetchRecordDetail(record.id)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              详情
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <p className="text-sm text-slate-500">
-                      共 {total} 条记录，第 {page} / {totalPages} 页
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(Math.max(1, page - 1))}
-                        disabled={page === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        上一页
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(Math.min(totalPages, page + 1))}
-                        disabled={page === totalPages}
-                      >
-                        下一页
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 统计信息 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{total}</div>
-                <p className="text-slate-500 text-sm">总考试人数</p>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{records.length}</p>
+                <p className="text-sm text-slate-500">总考试人数</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">
                   {records.filter(r => r.score >= 60).length}
-                </div>
-                <p className="text-slate-500 text-sm">及格人数</p>
+                </p>
+                <p className="text-sm text-slate-500">及格人数</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">
-                  {total > 0 ? Math.round(records.reduce((acc, r) => acc + r.score, 0) / records.length) : 0}分
-                </div>
-                <p className="text-slate-500 text-sm">平均分</p>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="h-6 w-6 text-red-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">
-                  {[...new Set(records.map(r => r.exam_module))].length}
-                </div>
-                <p className="text-slate-500 text-sm">参与模块数</p>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">
+                  {records.filter(r => r.score < 60).length}
+                </p>
+                <p className="text-sm text-slate-500">不及格人数</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* 搜索框 */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                placeholder="搜索姓名、公司名称、手机号、身份证号..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 记录列表 */}
+        {loading ? (
+          <Card>
+            <CardContent className="p-8 text-center text-slate-500">
+              加载中...
+            </CardContent>
+          </Card>
+        ) : filteredRecords.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-slate-500">
+              暂无考试记录
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm">姓名</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden md:table-cell">公司名称</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden lg:table-cell">考试模块</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm">成绩</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden sm:table-cell">提交时间</th>
+                    <th className="text-center p-4 font-semibold text-slate-600 text-sm">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRecords.map((record) => (
+                    <tr key={record.id} className="border-b hover:bg-slate-50 transition-colors">
+                      <td className="p-4">
+                        <div className="font-semibold">{record.name}</div>
+                        <div className="text-sm text-slate-500 md:hidden">{record.work_type}</div>
+                      </td>
+                      <td className="p-4 text-sm hidden md:table-cell">{record.work_type}</td>
+                      <td className="p-4 hidden lg:table-cell">
+                        <Badge variant="outline" className="text-xs">
+                          {getModuleName(record.exam_module)}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-semibold ${getScoreColor(record.score)}`}>
+                          {record.score >= 60 ? (
+                            <CheckCircle className="h-4 w-4" />
+                          ) : (
+                            <XCircle className="h-4 w-4" />
+                          )}
+                          {record.score}分
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-slate-500 hidden sm:table-cell">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(record.submitted_at)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSelectedRecord(record)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          详情
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
       </main>
-
-      {/* 详情弹窗 */}
-      <Dialog open={!!selectedRecord} onOpenChange={() => setSelectedRecord(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>考试详情</DialogTitle>
-          </DialogHeader>
-          {loadingDetail ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          ) : selectedRecord ? (
-            <div className="space-y-6">
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-3">基本信息</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-slate-500">姓名：</span>
-                    <span className="font-medium">{selectedRecord.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">公司名称：</span>
-                    <span className="font-medium">{selectedRecord.work_type}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">身份证号：</span>
-                    <span className="font-mono">{selectedRecord.id_card}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">电话：</span>
-                    <span>{selectedRecord.phone}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">考试模块：</span>
-                    <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                      {getModuleIcon(selectedRecord.exam_module)}
-                      {moduleNameMap[selectedRecord.exam_module] || selectedRecord.exam_module}
-                    </Badge>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">考试分数：</span>
-                    <Badge className={getScoreColor(selectedRecord.score)}>
-                      {selectedRecord.score}分
-                    </Badge>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-500">提交时间：</span>
-                    <span>{formatDate(selectedRecord.submitted_at)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {selectedRecord.photo_url && (
-                <div>
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Camera className="h-4 w-4" />
-                    答题照片
-                  </h3>
-                  <img
-                    src={selectedRecord.photo_url}
-                    alt="答题照片"
-                    className="max-w-full rounded-lg border"
-                  />
-                </div>
-              )}
-
-              {selectedRecord.answers && (
-                <div>
-                  <h3 className="font-semibold mb-3">答题详情</h3>
-                  <div className="space-y-3">
-                    {Object.entries(selectedRecord.answers).map(([questionId, answer], index) => (
-                      <div key={questionId} className="p-3 bg-slate-50 rounded-lg text-sm">
-                        <p className="text-slate-500">第{index + 1}题答案：{answer || '(未作答)'}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

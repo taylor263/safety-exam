@@ -25,6 +25,9 @@ export interface WorkTypeConfig {
   id: WorkType;
   name: string;
   description: string;
+  icon: 'shield' | 'users' | 'zap';
+  color: string;
+  bgColor: string;
   questionCount: {
     choice: number;
     judge: number;
@@ -36,20 +39,29 @@ export const workTypes: WorkTypeConfig[] = [
   {
     id: 'confined_space',
     name: '受限空间作业',
-    description: '储罐、容器、管道、地下室等密闭空间作业',
-    questionCount: { choice: 5, judge: 5, fill: 3 },
+    description: '储罐、容器、管道、地下室等密闭空间作业安全考核',
+    icon: 'shield',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+    questionCount: { choice: 10, judge: 10, fill: 5 },
   },
   {
     id: 'lifting',
     name: '吊装作业',
-    description: '使用起重机械吊运物体的作业',
-    questionCount: { choice: 5, judge: 5, fill: 3 },
+    description: '使用起重机械吊运物体的作业安全考核',
+    icon: 'users',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
+    questionCount: { choice: 10, judge: 10, fill: 5 },
   },
   {
     id: 'comprehensive',
     name: '动火/临时用电/高处作业',
-    description: '动火作业、临时用电作业、高处作业综合考核',
-    questionCount: { choice: 10, judge: 7, fill: 3 },
+    description: '动火作业、临时用电作业、高处作业综合安全考核',
+    icon: 'zap',
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    questionCount: { choice: 10, judge: 10, fill: 5 },
   },
 ];
 

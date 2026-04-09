@@ -22,7 +22,14 @@
 │   ├── components/ui/      # Shadcn UI 组件库
 │   ├── hooks/              # 自定义 Hooks
 │   ├── lib/                # 工具库
+│   │   ├── questions/      # 题库模块（按工种拆分）
+│   │   │   ├── confined-space.ts  # 受限空间作业题库
+│   │   │   ├── lifting.ts         # 吊装作业题库
+│   │   │   ├── comprehensive.ts   # 综合作业题库
+│   │   │   └── index.ts           # 题库导出与配置
 │   │   └── utils.ts        # 通用工具函数 (cn)
+│   ├── storage/            # 存储集成
+│   │   └── database/       # Supabase 数据库集成
 │   └── server.ts           # 自定义服务端入口
 ├── next.config.ts          # Next.js 配置
 ├── package.json            # 项目依赖管理
@@ -50,6 +57,11 @@
    2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
    3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
 
+### API 路由集成
+
+- 使用项目内置的 Supabase 客户端：`import { getSupabaseClient } from '@/storage/database/supabase-client'`
+- **禁止**直接使用 `@supabase/supabase-js` 的 `createClient`，会导致构建时环境变量问题
+
 ## UI 设计与组件规范 (UI & Styling Standards)
 
 - 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
@@ -59,16 +71,19 @@
 
 ### 安全生产培训考核系统
 
-本系统用于八大特殊作业与非常规作业的安全常识考试。
+本系统用于八大特殊作业与非常规作业的安全常识考试。支持按工种选择不同的答题模块。
 
-#### 页面路由
-- `/` - 首页（考试入口、管理端入口）
-- `/exam` - 考试页面（信息填写 + 答题 + 拍照上传）
-- `/admin` - 管理端（查看所有考试成绩）
+### 页面路由
 
-#### 数据库表
+- `/` - 首页（考试模块选择、入口、管理端入口）
+- `/exam` - 考试页面（模块选择 → 信息填写 → 答题 → 拍照上传 → 提交）
+- `/admin` - 管理端（查看所有考试成绩、搜索筛选）
+
+### 数据库表
+
 - `exam_records` - 考试记录表
-  - `work_type` - 工种
+  - `work_type` - 公司名称
+  - `exam_module` - 考试模块ID（confined_space/lifting/comprehensive）
   - `name` - 姓名
   - `id_card` - 身份证号
   - `phone` - 电话
@@ -77,17 +92,40 @@
   - `answers` - 答题详情JSON
   - `submitted_at` - 提交时间
 
-#### API 接口
-- `GET /api/exam` - 获取考试记录列表
-- `POST /api/exam` - 提交考试成绩
+### API 接口
+
+- `GET /api/exam` - 获取考试记录列表（支持按公司名称、考试模块、日期范围筛选）
+- `POST /api/exam` - 提交考试成绩（包含公司名称、考试模块、答题信息、照片）
 - `GET /api/exam/records/[id]` - 获取考试记录详情
 
-#### 题库结构
-- 10道选择题（每题5分）
-- 10道判断题（每题3分）
-- 5道填空题（每题6分）
-- 总分100分
+### 题库结构
 
-#### 照片上传
+- **三个独立题库模块**，统一结构：
+  - 受限空间作业（confined_space）
+  - 吊装作业（lifting）
+  - 动火/临时用电/高处作业综合（comprehensive）
+- 每个模块包含：
+  - 10道选择题（每题5分）
+  - 10道判断题（每题3分）
+  - 5道填空题（每题6分）
+  - 总分100分
+
+### 照片上传
+
 - 使用 S3Storage 对象存储
-- 照片作为考试凭证必须上传才能提交
+- 照片作为考试凭证，**必须上传才能提交**
+
+### 管理端
+
+- 密码保护（默认密码：admin123）
+- 支持按姓名、公司名称、手机号、身份证号搜索
+- 显示考试模块名称
+- 查看答题详情
+
+### UI 特性
+
+- 蓝色系主题
+- 手机端优先的大按钮设计
+- 响应式布局（移动端/桌面端适配）
+- 实时答题进度显示
+- 快速跳转答题

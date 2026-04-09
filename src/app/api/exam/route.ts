@@ -1,125 +1,175 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { S3Storage } from 'coze-coding-dev-sdk';
 
-// 初始化存储
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
+// 获取存储的 token
+const storageToken = process.env.S3_STORAGE_TOKEN || '';
 
-// 提交考试成绩
-export async function POST(request: NextRequest) {
+async function uploadPhoto(base64Data: string): Promise<string | null> {
   try {
-    const body = await request.json();
-    const { companyName, name, idCard, phone, examModule, photo, answers, score } = body;
-
-    // 验证必填字段
-    if (!companyName || !name || !idCard || !phone || !examModule || !answers || score === undefined) {
-      return NextResponse.json(
-        { error: '缺少必填字段' },
-        { status: 400 }
-      );
-    }
-
-    // 验证照片（必须有照片才能提交）
-    if (!photo) {
-      return NextResponse.json(
-        { error: '必须上传做题照片才能提交' },
-        { status: 400 }
-      );
-    }
-
-    // 上传照片
-    let photoKey = '';
-    try {
-      const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-      
-      const fileName = `exam-photos/${idCard}_${Date.now()}.jpg`;
-      photoKey = await storage.uploadFile({
-        fileContent: buffer,
-        fileName,
-        contentType: 'image/jpeg',
-      });
-    } catch (uploadError) {
-      console.error('照片上传失败:', uploadError);
-      return NextResponse.json(
-        { error: '照片上传失败' },
-        { status: 500 }
-      );
-    }
-
-    // 保存到数据库
-    const client = getSupabaseClient();
-    const { data, error } = await client.from('exam_records').insert({
-      work_type: companyName, // 公司名称
-      name,
-      id_card: idCard,
-      phone,
-      exam_module: examModule, // 考试模块
-      photo_key: photoKey,
-      score,
-      answers,
-    }).select();
-
-    if (error) {
-      console.error('数据库插入失败:', error);
-      return NextResponse.json(
-        { error: '保存考试记录失败' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: data[0],
+    // 将 base64 转换为 Buffer
+    const base64Response = await fetch(base64Data);
+    const blob = await base64Response.blob();
+    const buffer = await blob.arrayBuffer();
+    
+    // 生成唯一文件名
+    const fileName = `exam_photos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+    
+    // 上传到 S3
+    const response = await fetch('https://api.coze.cn/v1/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${storageToken}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: buffer,
     });
+    
+    if (!response.ok) {
+      console.error('上传失败:', response.statusText);
+      return null;
+    }
+    
+    const result = await response.json();
+    return result.data?.id || null;
   } catch (error) {
-    console.error('提交考试失败:', error);
-    return NextResponse.json(
-      { error: '服务器错误' },
-      { status: 500 }
-    );
+    console.error('上传错误:', error);
+    return null;
   }
 }
 
-// 获取所有考试记录
+// GET - 获取考试记录列表
 export async function GET(request: NextRequest) {
   try {
-    const client = getSupabaseClient();
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = (page - 1) * limit;
-
-    const { data, error, count } = await client
+    const supabase = getSupabaseClient();
+    const searchParams = request.nextUrl.searchParams;
+    const companyName = searchParams.get('companyName');
+    const examModule = searchParams.get('examModule');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    
+    let query = supabase
       .from('exam_records')
-      .select('id, work_type, name, id_card, phone, exam_module, score, submitted_at', { count: 'exact' })
-      .order('submitted_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
+      .select('*')
+      .order('submitted_at', { ascending: false });
+    
+    if (companyName) {
+      query = query.ilike('work_type', `%${companyName}%`);
+    }
+    
+    if (examModule) {
+      query = query.eq('exam_module', examModule);
+    }
+    
+    if (startDate) {
+      query = query.gte('submitted_at', startDate);
+    }
+    
+    if (endDate) {
+      query = query.lte('submitted_at', endDate);
+    }
+    
+    const { data, error } = await query.limit(100);
+    
     if (error) {
       console.error('查询失败:', error);
-      return NextResponse.json(
-        { error: '查询失败' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: '查询失败' }, { status: 500 });
     }
+    
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('服务器错误:', error);
+    return NextResponse.json({ success: false, error: '服务器错误' }, { status: 500 });
+  }
+}
 
-    return NextResponse.json({
-      success: true,
-      data: data,
-      total: count || 0,
-      page,
-      limit,
+// POST - 提交考试成绩
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+    const body = await request.json();
+    const {
+      companyName,
+      name,
+      idCard,
+      phone,
+      examModule,
+      photo,
+      answers,
+      score
+    } = body;
+    
+    // 验证必填字段
+    if (!companyName || !name || !idCard || !phone || !examModule) {
+      return NextResponse.json({ 
+        success: false, 
+        error: '缺少必填字段：公司名称、姓名、身份证号、手机号、考试模块' 
+      }, { status: 400 });
+    }
+    
+    // 验证身份证号格式
+    if (!/^\d{17}[\dXx]$/.test(idCard)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: '身份证号格式不正确' 
+      }, { status: 400 });
+    }
+    
+    // 验证手机号格式
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: '手机号格式不正确' 
+      }, { status: 400 });
+    }
+    
+    // 上传照片
+    let photoKey = null;
+    if (photo) {
+      photoKey = await uploadPhoto(photo);
+      if (!photoKey) {
+        return NextResponse.json({ 
+          success: false, 
+          error: '照片上传失败，请重试' 
+        }, { status: 500 });
+      }
+    }
+    
+    // 保存到数据库
+    // 注意：数据库中使用 work_type 存储公司名称，exam_module 存储考试模块ID
+    const { data, error } = await supabase
+      .from('exam_records')
+      .insert({
+        work_type: companyName, // 公司名称存储在 work_type 列
+        exam_module: examModule,
+        name,
+        id_card: idCard,
+        phone,
+        photo_key: photoKey,
+        score,
+        answers: JSON.stringify(answers),
+        submitted_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('保存失败:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: '保存考试记录失败' 
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: '考试提交成功',
+      data: { id: data.id, score: data.score }
     });
   } catch (error) {
-    console.error('获取考试记录失败:', error);
-    return NextResponse.json(
-      { error: '服务器错误' },
-      { status: 500 }
-    );
+    console.error('服务器错误:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: '服务器错误' 
+    }, { status: 500 });
   }
 }

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Upload, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone, Users, Briefcase, Zap, ShieldCheck } from 'lucide-react';
+import { Camera, Upload, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone, Shield, Users, Zap } from 'lucide-react';
 import { getQuestionsByWorkType, workTypes, shuffleArray, type Question, type WorkType } from '@/lib/questions';
 
 type ExamPhase = 'select' | 'info' | 'exam' | 'camera' | 'submit';
@@ -23,8 +23,9 @@ interface Answers {
   [key: string]: string;
 }
 
-export default function ExamPage() {
+function ExamContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +36,7 @@ export default function ExamPage() {
     name: '',
     idCard: '',
     phone: '',
-    examModule: 'confined_space',
+    examModule: (searchParams.get('module') as WorkType) || 'confined_space',
   });
   
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
@@ -66,9 +67,8 @@ export default function ExamPage() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
-      console.error('无法访问摄像头:', err);
-      setCameraError('无法访问摄像头，请允许摄像头权限或使用相册上传');
+    } catch {
+      setCameraError('无法访问摄像头，请使用相册上传');
     }
   };
 
@@ -127,7 +127,6 @@ export default function ExamPage() {
       alert(error);
       return;
     }
-    // 加载对应模块的题目
     const questions = getQuestionsByWorkType(userInfo.examModule);
     setExamQuestions(shuffleArray(questions));
     setPhase('exam');
@@ -187,8 +186,7 @@ export default function ExamPage() {
         alert(result.error || '提交失败');
         setPhase('camera');
       }
-    } catch (err) {
-      console.error('提交失败:', err);
+    } catch {
       alert('提交失败，请检查网络后重试');
       setPhase('camera');
     } finally {
@@ -198,66 +196,63 @@ export default function ExamPage() {
 
   const answeredCount = Object.keys(answers).length;
   const progress = examQuestions.length > 0 ? (answeredCount / examQuestions.length) * 100 : 0;
+  const currentModule = workTypes.find(wt => wt.id === userInfo.examModule);
 
   // ==================== 模块选择页面 ====================
   if (phase === 'select') {
+    const getIcon = (icon: 'shield' | 'users' | 'zap', className: string) => {
+      switch (icon) {
+        case 'shield': return <Shield className={className} />;
+        case 'users': return <Users className={className} />;
+        case 'zap': return <Zap className={className} />;
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-100">
-        <header className="bg-blue-600 text-white py-4 px-4 shadow-lg sticky top-0 z-10">
-          <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-blue-600 text-white">
+          <div className="max-w-4xl mx-auto px-4 py-6 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-bold">安全生产培训考核</h1>
+            <div>
+              <h1 className="text-lg font-bold">安全生产培训考核</h1>
+              <p className="text-xs text-blue-200">请选择考试模块</p>
+            </div>
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6">
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2 text-blue-800 text-sm">
-            <Smartphone className="h-4 w-4 flex-shrink-0" />
-            <span>本系统已针对手机端优化，请放心使用</span>
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Smartphone className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-medium text-blue-800">手机端已优化</p>
+              <p className="text-sm text-blue-600">支持手机答题、拍照上传</p>
+            </div>
           </div>
 
-          <h2 className="text-xl font-bold text-slate-800 mb-4 text-center">请选择考试模块</h2>
-
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {workTypes.map((wt) => (
               <Card 
-                key={wt.id} 
-                className="cursor-pointer hover:shadow-lg transition-all hover:border-blue-400"
+                key={wt.id}
+                className={`cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-300 overflow-hidden`}
                 onClick={() => handleSelectModule(wt.id)}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                      wt.id === 'confined_space' ? 'bg-purple-100' :
-                      wt.id === 'lifting' ? 'bg-orange-100' : 'bg-red-100'
-                    }`}>
-                      {wt.id === 'confined_space' ? (
-                        <ShieldCheck className={`h-7 w-7 text-purple-600`} />
-                      ) : wt.id === 'lifting' ? (
-                        <Users className={`h-7 w-7 text-orange-600`} />
-                      ) : (
-                        <Zap className={`h-7 w-7 text-red-600`} />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-slate-800">{wt.name}</h3>
-                      <p className="text-slate-500 text-sm mt-1">{wt.description}</p>
-                      <div className="flex gap-2 mt-2">
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
-                          {wt.questionCount.choice}道选择题
-                        </span>
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
-                          {wt.questionCount.judge}道判断题
-                        </span>
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
-                          {wt.questionCount.fill}道填空题
-                        </span>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-slate-400 self-center" />
+                <div className={`h-1 ${wt.bgColor.replace('100', '500')}`}></div>
+                <CardContent className="p-6">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${wt.bgColor}`}>
+                    {getIcon(wt.icon, `h-7 w-7 ${wt.color}`)}
                   </div>
+                  <h3 className="font-bold text-lg text-slate-800 mb-2">{wt.name}</h3>
+                  <p className="text-slate-500 text-sm mb-4">{wt.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.choice}选择题</span>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.judge}判断题</span>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{wt.questionCount.fill}填空题</span>
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">选择</Button>
                 </CardContent>
               </Card>
             ))}
@@ -269,75 +264,67 @@ export default function ExamPage() {
 
   // ==================== 信息填写页面 ====================
   if (phase === 'info') {
-    const currentModule = workTypes.find(wt => wt.id === userInfo.examModule);
-    
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-100">
-        <header className="bg-blue-600 text-white py-4 px-4 shadow-lg sticky top-0 z-10">
-          <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-blue-600 text-white">
+          <div className="max-w-md mx-auto px-4 py-6 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setPhase('select')} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="text-lg font-bold">个人信息填写</h1>
-              <p className="text-xs text-blue-200">正在参加：{currentModule?.name}</p>
+              <p className="text-xs text-blue-200">考试模块：{currentModule?.name}</p>
             </div>
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6">
-          <Card className="shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl text-center">请填写个人信息</CardTitle>
-              <p className="text-center text-slate-500 text-sm mt-1">带 * 号为必填项</p>
+        <main className="max-w-md mx-auto px-4 py-6">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-center text-xl">请填写个人信息</CardTitle>
+              <p className="text-center text-slate-500 text-sm">带 * 号为必填项</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label htmlFor="companyName" className="text-base font-medium">公司名称 *</label>
+                <label className="text-sm font-medium text-slate-700">公司名称 *</label>
                 <Input
-                  id="companyName"
                   placeholder="请输入您的公司名称"
                   value={userInfo.companyName}
                   onChange={(e) => setUserInfo({ ...userInfo, companyName: e.target.value })}
-                  className="mt-2 h-12 text-base"
+                  className="mt-1 h-12"
                 />
               </div>
               <div>
-                <label htmlFor="name" className="text-base font-medium">姓名 *</label>
+                <label className="text-sm font-medium text-slate-700">姓名 *</label>
                 <Input
-                  id="name"
                   placeholder="请输入您的真实姓名"
                   value={userInfo.name}
                   onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
-                  className="mt-2 h-12 text-base"
+                  className="mt-1 h-12"
                 />
               </div>
               <div>
-                <label htmlFor="idCard" className="text-base font-medium">身份证号 *</label>
+                <label className="text-sm font-medium text-slate-700">身份证号 *</label>
                 <Input
-                  id="idCard"
                   placeholder="18位身份证号"
                   value={userInfo.idCard}
                   onChange={(e) => setUserInfo({ ...userInfo, idCard: e.target.value })}
                   maxLength={18}
-                  className="mt-2 h-12 text-base font-mono"
-                  inputMode="numeric"
+                  className="mt-1 h-12 font-mono"
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="text-base font-medium">手机号 *</label>
+                <label className="text-sm font-medium text-slate-700">手机号 *</label>
                 <Input
-                  id="phone"
                   type="tel"
                   placeholder="11位手机号码"
                   value={userInfo.phone}
                   onChange={(e) => setUserInfo({ ...userInfo, phone: e.target.value })}
                   maxLength={11}
-                  className="mt-2 h-12 text-base"
-                  inputMode="tel"
+                  className="mt-1 h-12"
                 />
               </div>
-              <Button onClick={handleStartExam} className="w-full h-14 text-lg mt-6 bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleStartExam} className="w-full h-12 mt-4 bg-blue-600 hover:bg-blue-700 text-base font-medium">
                 开始考试
               </Button>
             </CardContent>
@@ -349,29 +336,28 @@ export default function ExamPage() {
 
   // ==================== 提交成功页面 ====================
   if (phase === 'submit' && submitResult) {
-    const currentModule = workTypes.find(wt => wt.id === userInfo.examModule);
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-slate-100 flex items-center justify-center p-4">
-        <Card className="max-w-sm w-full text-center p-6 shadow-xl">
-          <div className="flex justify-center mb-4">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-12 w-12 text-green-600" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="max-w-sm w-full text-center shadow-lg">
+          <CardContent className="pt-8 pb-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
-          </div>
-          <h2 className="text-2xl font-bold text-green-600 mb-2">提交成功！</h2>
-          <p className="text-slate-600 mb-4">您的考试已成功提交</p>
-          <div className="bg-slate-100 rounded-xl p-6 mb-6">
-            <div className="text-5xl font-bold text-blue-600">{submitResult.score}分</div>
-            <p className="text-slate-500 text-sm mt-1">您的考试成绩</p>
-          </div>
-          <div className="text-sm text-slate-500 mb-6 space-y-1">
-            <p>姓名：{userInfo.name}</p>
-            <p>公司：{userInfo.companyName}</p>
-            <p>模块：{currentModule?.name}</p>
-          </div>
-          <Button onClick={() => router.push('/')} className="w-full h-12 text-lg">
-            返回首页
-          </Button>
+            <h2 className="text-2xl font-bold text-green-600 mb-2">提交成功！</h2>
+            <p className="text-slate-500 mb-4">您的考试已成功提交</p>
+            <div className="bg-slate-100 rounded-xl p-6 mb-6">
+              <div className="text-5xl font-bold text-blue-600">{submitResult.score}分</div>
+              <p className="text-slate-500 text-sm mt-1">您的考试成绩</p>
+            </div>
+            <div className="text-sm text-slate-500 mb-6 space-y-1">
+              <p>姓名：{userInfo.name}</p>
+              <p>公司：{userInfo.companyName}</p>
+              <p>模块：{currentModule?.name}</p>
+            </div>
+            <Button onClick={() => router.push('/')} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
+              返回首页
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -380,7 +366,7 @@ export default function ExamPage() {
   // ==================== 提交中页面 ====================
   if (phase === 'submit' && isSubmitting) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Card className="max-w-sm mx-auto text-center p-8">
           <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
           <h2 className="text-xl font-bold">正在提交...</h2>
@@ -393,9 +379,9 @@ export default function ExamPage() {
   // ==================== 拍照页面 ====================
   if (phase === 'camera') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-        <header className="bg-blue-600 text-white py-4 px-4 shadow-lg sticky top-0 z-10">
-          <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-blue-600 text-white">
+          <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setPhase('exam')} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -403,9 +389,9 @@ export default function ExamPage() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6">
-          <Card className="shadow-lg">
-            <CardHeader className="pb-4">
+        <main className="max-w-lg mx-auto px-4 py-6">
+          <Card className="shadow-sm">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Camera className="h-5 w-5" />
                 请拍摄您的答题照片
@@ -414,7 +400,7 @@ export default function ExamPage() {
             <CardContent className="space-y-4">
               <div className="bg-amber-50 border-l-4 border-amber-500 p-3 rounded text-sm">
                 <p className="text-amber-800 font-medium">请确保照片清晰显示：</p>
-                <ul className="list-disc list-inside text-amber-700 mt-1 space-y-0.5">
+                <ul className="list-disc list-inside text-amber-700 mt-1">
                   <li>您本人的面部</li>
                   <li>考试设备/界面</li>
                 </ul>
@@ -422,12 +408,12 @@ export default function ExamPage() {
 
               {photo ? (
                 <div className="space-y-4">
-                  <img src={photo} alt="答题照片" className="w-full rounded-lg border-2 border-slate-200" />
+                  <img src={photo} alt="答题照片" className="w-full rounded-lg border" />
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setPhoto(null)} className="flex-1 h-12 text-base">
+                    <Button variant="outline" onClick={() => setPhoto(null)} className="flex-1 h-12">
                       重新拍摄
                     </Button>
-                    <Button onClick={handleSubmit} className="flex-1 h-12 text-base bg-green-600 hover:bg-green-700">
+                    <Button onClick={handleSubmit} className="flex-1 h-12 bg-green-600 hover:bg-green-700">
                       <Send className="h-4 w-4 mr-2" />
                       确认提交
                     </Button>
@@ -442,43 +428,23 @@ export default function ExamPage() {
                   )}
                   
                   <div className="bg-slate-100 rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full"
-                    />
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full" />
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                   
-                  <Button onClick={takePhoto} className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={takePhoto} className="w-full h-12 bg-blue-600 hover:bg-blue-700">
                     <Camera className="h-5 w-5 mr-2" />
                     拍照
                   </Button>
 
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-300"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-slate-500">或</span>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-slate-300"></div>
+                    <span className="text-sm text-slate-500">或</span>
+                    <div className="flex-1 h-px bg-slate-300"></div>
                   </div>
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="user"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-12 text-base"
-                  >
+                  <input type="file" accept="image/*" capture="user" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+                  <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full h-12">
                     <Upload className="h-4 w-4 mr-2" />
                     从相册选择
                   </Button>
@@ -501,36 +467,34 @@ export default function ExamPage() {
   }
 
   // ==================== 答题页面 ====================
-  if (examQuestions.length === 0) {
-    return null;
-  }
+  if (examQuestions.length === 0) return null;
 
   const currentQuestion = examQuestions[currentIndex];
   const questionTypeLabel = currentQuestion.type === 'choice' ? '选择题' : currentQuestion.type === 'judge' ? '判断题' : '填空题';
   const questionScore = currentQuestion.type === 'choice' ? '5分' : currentQuestion.type === 'judge' ? '3分' : '6分';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <header className="bg-blue-600 text-white py-3 px-4 shadow-lg sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-blue-600 text-white sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">答题 {currentIndex + 1}/{examQuestions.length}</span>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={() => setPhase('camera')}
+              className="bg-white/20 text-white hover:bg-white/30 border-0 text-xs"
+            >
+              <Camera className="h-3 w-3 mr-1" />
+              上传照片
+            </Button>
           </div>
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={() => setPhase('camera')}
-            className="bg-white/20 text-white hover:bg-white/30 border-0"
-          >
-            <Camera className="h-4 w-4 mr-1" />
-            上传照片
-          </Button>
+          <Progress value={progress} className="h-1.5 bg-white/30" />
         </div>
-        <Progress value={progress} className="mt-2 h-2 bg-white/30" />
       </header>
 
-      <main className="container mx-auto px-4 py-4">
-        <Card className="shadow-lg">
+      <main className="max-w-2xl mx-auto px-4 py-4">
+        <Card className="shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg">
@@ -539,7 +503,7 @@ export default function ExamPage() {
                   【{questionTypeLabel}，{questionScore}】
                 </span>
               </CardTitle>
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
+              <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
                 {currentQuestion.category}
               </span>
             </div>
@@ -557,7 +521,7 @@ export default function ExamPage() {
                     className={`w-full p-4 rounded-xl border-2 text-left text-base transition-all ${
                       answers[currentQuestion.id] === option[0]
                         ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
-                        : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                        : 'border-slate-200 hover:border-blue-300'
                     }`}
                   >
                     {option}
@@ -574,7 +538,7 @@ export default function ExamPage() {
                   className={`p-6 rounded-xl border-2 text-center text-lg transition-all ${
                     answers[currentQuestion.id] === '正确'
                       ? 'border-green-500 bg-green-50 text-green-700 font-bold'
-                      : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                      : 'border-slate-200 hover:border-green-300'
                   }`}
                 >
                   <span className="text-2xl block mb-1">✓</span>
@@ -585,7 +549,7 @@ export default function ExamPage() {
                   className={`p-6 rounded-xl border-2 text-center text-lg transition-all ${
                     answers[currentQuestion.id] === '错误'
                       ? 'border-red-500 bg-red-50 text-red-700 font-bold'
-                      : 'border-slate-200 hover:border-red-300 hover:bg-slate-50'
+                      : 'border-slate-200 hover:border-red-300'
                   }`}
                 >
                   <span className="text-2xl block mb-1">✗</span>
@@ -596,14 +560,12 @@ export default function ExamPage() {
 
             {/* 填空题 */}
             {currentQuestion.type === 'fill' && (
-              <div>
-                <Input
-                  placeholder="请在此输入答案"
-                  value={answers[currentQuestion.id] || ''}
-                  onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                  className="text-lg h-14"
-                />
-              </div>
+              <Input
+                placeholder="请在此输入答案"
+                value={answers[currentQuestion.id] || ''}
+                onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
+                className="text-lg h-12"
+              />
             )}
 
             {/* 导航按钮 */}
@@ -612,7 +574,7 @@ export default function ExamPage() {
                 variant="outline"
                 onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                 disabled={currentIndex === 0}
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-12"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 上一题
@@ -621,7 +583,7 @@ export default function ExamPage() {
               {currentIndex === examQuestions.length - 1 ? (
                 <Button
                   onClick={() => setPhase('camera')}
-                  className="flex-1 h-12 text-base bg-green-600 hover:bg-green-700"
+                  className="flex-1 h-12 bg-green-600 hover:bg-green-700"
                 >
                   完成答题
                   <Upload className="h-4 w-4 ml-2" />
@@ -629,7 +591,7 @@ export default function ExamPage() {
               ) : (
                 <Button
                   onClick={() => setCurrentIndex(currentIndex + 1)}
-                  className="flex-1 h-12 text-base"
+                  className="flex-1 h-12"
                 >
                   下一题
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -660,5 +622,25 @@ export default function ExamPage() {
         </Card>
       </main>
     </div>
+  );
+}
+
+function ExamLoading() {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <Card className="max-w-sm mx-auto text-center p-8">
+        <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <h2 className="text-xl font-bold">加载中...</h2>
+        <p className="text-slate-500 mt-2">请稍候</p>
+      </Card>
+    </div>
+  );
+}
+
+export default function ExamPage() {
+  return (
+    <Suspense fallback={<ExamLoading />}>
+      <ExamContent />
+    </Suspense>
   );
 }
