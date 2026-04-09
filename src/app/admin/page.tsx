@@ -7,20 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, Camera, Lock, Shield } from 'lucide-react';
+import { ArrowLeft, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, Camera, Lock, Shield, Users, Zap, ShieldCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { workTypes, type WorkType } from '@/lib/questions';
 
 interface ExamRecord {
   id: string;
-  work_type: string;
+  work_type: string; // 公司名称
   name: string;
   id_card: string;
   phone: string;
+  exam_module: WorkType; // 考试模块
   score: number;
   submitted_at: string;
 }
@@ -29,6 +31,13 @@ interface ExamDetail extends ExamRecord {
   photo_url?: string;
   answers?: Record<string, string>;
 }
+
+// 工种模块名称映射
+const moduleNameMap: Record<WorkType, string> = {
+  confined_space: '受限空间作业',
+  lifting: '吊装作业',
+  comprehensive: '动火/临时用电/高处',
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -44,12 +53,9 @@ export default function AdminPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const limit = 15;
-
-  // 简单的前端密码验证（实际生产环境应使用服务端验证）
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
 
   useEffect(() => {
-    // 检查是否已验证过
     const authed = sessionStorage.getItem('admin_authenticated');
     if (authed === 'true') {
       setIsAuthenticated(true);
@@ -110,7 +116,12 @@ export default function AdminPage() {
   };
 
   const filteredRecords = searchName
-    ? records.filter(r => r.name.includes(searchName) || r.id_card.includes(searchName) || r.phone.includes(searchName))
+    ? records.filter(r => 
+        r.name.includes(searchName) || 
+        r.id_card.includes(searchName) || 
+        r.phone.includes(searchName) ||
+        r.work_type.includes(searchName)
+      )
     : records;
 
   const totalPages = Math.ceil(total / limit);
@@ -130,6 +141,17 @@ export default function AdminPage() {
     if (score >= 90) return 'bg-green-100 text-green-800';
     if (score >= 60) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
+  };
+
+  const getModuleIcon = (module: WorkType) => {
+    switch (module) {
+      case 'confined_space':
+        return <ShieldCheck className="h-4 w-4" />;
+      case 'lifting':
+        return <Users className="h-4 w-4" />;
+      case 'comprehensive':
+        return <Zap className="h-4 w-4" />;
+    }
   };
 
   // 登录页面
@@ -166,7 +188,7 @@ export default function AdminPage() {
               返回首页
             </Button>
             <p className="text-xs text-slate-400 text-center">
-              默认密码：admin123（可在环境变量 NEXT_PUBLIC_ADMIN_PASSWORD 修改）
+              默认密码：admin123
             </p>
           </CardContent>
         </Card>
@@ -199,7 +221,7 @@ export default function AdminPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="搜索姓名/身份证/电话"
+                    placeholder="搜索姓名/公司/电话"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
                     className="pl-9 w-64"
@@ -228,7 +250,8 @@ export default function AdminPage() {
                       <TableRow>
                         <TableHead>序号</TableHead>
                         <TableHead>姓名</TableHead>
-                        <TableHead>工种</TableHead>
+                        <TableHead>公司名称</TableHead>
+                        <TableHead>考试模块</TableHead>
                         <TableHead>身份证号</TableHead>
                         <TableHead>电话</TableHead>
                         <TableHead>分数</TableHead>
@@ -242,6 +265,12 @@ export default function AdminPage() {
                           <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                           <TableCell className="font-medium">{record.name}</TableCell>
                           <TableCell>{record.work_type}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                              {getModuleIcon(record.exam_module)}
+                              {moduleNameMap[record.exam_module] || record.exam_module}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="font-mono text-sm">{record.id_card}</TableCell>
                           <TableCell>{record.phone}</TableCell>
                           <TableCell>
@@ -268,7 +297,6 @@ export default function AdminPage() {
                   </Table>
                 </div>
 
-                {/* 分页 */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4 pt-4 border-t">
                     <p className="text-sm text-slate-500">
@@ -302,7 +330,7 @@ export default function AdminPage() {
         </Card>
 
         {/* 统计信息 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
@@ -331,6 +359,16 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">
+                  {[...new Set(records.map(r => r.exam_module))].length}
+                </div>
+                <p className="text-slate-500 text-sm">参与模块数</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
 
@@ -346,7 +384,6 @@ export default function AdminPage() {
             </div>
           ) : selectedRecord ? (
             <div className="space-y-6">
-              {/* 基本信息 */}
               <div className="bg-slate-50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-3">基本信息</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -355,7 +392,7 @@ export default function AdminPage() {
                     <span className="font-medium">{selectedRecord.name}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">工种：</span>
+                    <span className="text-slate-500">公司名称：</span>
                     <span className="font-medium">{selectedRecord.work_type}</span>
                   </div>
                   <div>
@@ -367,19 +404,25 @@ export default function AdminPage() {
                     <span>{selectedRecord.phone}</span>
                   </div>
                   <div>
+                    <span className="text-slate-500">考试模块：</span>
+                    <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                      {getModuleIcon(selectedRecord.exam_module)}
+                      {moduleNameMap[selectedRecord.exam_module] || selectedRecord.exam_module}
+                    </Badge>
+                  </div>
+                  <div>
                     <span className="text-slate-500">考试分数：</span>
                     <Badge className={getScoreColor(selectedRecord.score)}>
                       {selectedRecord.score}分
                     </Badge>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-slate-500">提交时间：</span>
                     <span>{formatDate(selectedRecord.submitted_at)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* 答题照片 */}
               {selectedRecord.photo_url && (
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -394,7 +437,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* 答题详情 */}
               {selectedRecord.answers && (
                 <div>
                   <h3 className="font-semibold mb-3">答题详情</h3>

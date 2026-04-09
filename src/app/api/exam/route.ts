@@ -13,10 +13,10 @@ const storage = new S3Storage({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { workType, name, idCard, phone, photo, answers, score } = body;
+    const { companyName, name, idCard, phone, examModule, photo, answers, score } = body;
 
     // 验证必填字段
-    if (!workType || !name || !idCard || !phone || !answers || score === undefined) {
+    if (!companyName || !name || !idCard || !phone || !examModule || !answers || score === undefined) {
       return NextResponse.json(
         { error: '缺少必填字段' },
         { status: 400 }
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
     // 上传照片
     let photoKey = '';
     try {
-      // 将 base64 转换为 Buffer
       const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
       
@@ -55,10 +54,11 @@ export async function POST(request: NextRequest) {
     // 保存到数据库
     const client = getSupabaseClient();
     const { data, error } = await client.from('exam_records').insert({
-      work_type: workType,
+      work_type: companyName, // 公司名称
       name,
       id_card: idCard,
       phone,
+      exam_module: examModule, // 考试模块
       photo_key: photoKey,
       score,
       answers,
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error, count } = await client
       .from('exam_records')
-      .select('id, work_type, name, id_card, phone, score, submitted_at', { count: 'exact' })
+      .select('id, work_type, name, id_card, phone, exam_module, score, submitted_at', { count: 'exact' })
       .order('submitted_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

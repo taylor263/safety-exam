@@ -5,19 +5,18 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Upload, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone } from 'lucide-react';
-import { questions, shuffleArray, type Question } from '@/lib/questions';
+import { Camera, Upload, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone, Users, Briefcase, Zap, ShieldCheck } from 'lucide-react';
+import { getQuestionsByWorkType, workTypes, shuffleArray, type Question, type WorkType } from '@/lib/questions';
 
-type ExamPhase = 'info' | 'exam' | 'camera' | 'submit';
+type ExamPhase = 'select' | 'info' | 'exam' | 'camera' | 'submit';
 
 interface UserInfo {
-  workType: string;
+  companyName: string;
   name: string;
   idCard: string;
   phone: string;
+  examModule: WorkType;
 }
 
 interface Answers {
@@ -30,12 +29,13 @@ export default function ExamPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [phase, setPhase] = useState<ExamPhase>('info');
+  const [phase, setPhase] = useState<ExamPhase>('select');
   const [userInfo, setUserInfo] = useState<UserInfo>({
-    workType: '',
+    companyName: '',
     name: '',
     idCard: '',
     phone: '',
+    examModule: 'confined_space',
   });
   
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
@@ -46,12 +46,6 @@ export default function ExamPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; score: number } | null>(null);
   const [cameraError, setCameraError] = useState('');
-
-  // 初始化题目
-  useEffect(() => {
-    const shuffled = shuffleArray(questions);
-    setExamQuestions(shuffled);
-  }, []);
 
   // 启动摄像头
   useEffect(() => {
@@ -101,7 +95,6 @@ export default function ExamPage() {
     }
   };
 
-  // 相册选择（备用方案）
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -113,8 +106,13 @@ export default function ExamPage() {
     }
   };
 
+  const handleSelectModule = (module: WorkType) => {
+    setUserInfo({ ...userInfo, examModule: module });
+    setPhase('info');
+  };
+
   const validateInfo = () => {
-    if (!userInfo.workType.trim()) return '请输入工种';
+    if (!userInfo.companyName.trim()) return '请输入公司名称';
     if (!userInfo.name.trim()) return '请输入姓名';
     if (!userInfo.idCard.trim()) return '请输入身份证号';
     if (!/^\d{17}[\dXx]$/.test(userInfo.idCard)) return '身份证号格式不正确（18位）';
@@ -129,6 +127,9 @@ export default function ExamPage() {
       alert(error);
       return;
     }
+    // 加载对应模块的题目
+    const questions = getQuestionsByWorkType(userInfo.examModule);
+    setExamQuestions(shuffleArray(questions));
     setPhase('exam');
   };
 
@@ -168,7 +169,11 @@ export default function ExamPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...userInfo,
+          companyName: userInfo.companyName,
+          name: userInfo.name,
+          idCard: userInfo.idCard,
+          phone: userInfo.phone,
+          examModule: userInfo.examModule,
           photo,
           answers,
           score,
@@ -194,8 +199,8 @@ export default function ExamPage() {
   const answeredCount = Object.keys(answers).length;
   const progress = examQuestions.length > 0 ? (answeredCount / examQuestions.length) * 100 : 0;
 
-  // ==================== 信息填写页面 ====================
-  if (phase === 'info') {
+  // ==================== 模块选择页面 ====================
+  if (phase === 'select') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-100">
         <header className="bg-blue-600 text-white py-4 px-4 shadow-lg sticky top-0 z-10">
@@ -208,12 +213,79 @@ export default function ExamPage() {
         </header>
 
         <main className="container mx-auto px-4 py-6">
-          {/* 手机端提示 */}
           <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2 text-blue-800 text-sm">
             <Smartphone className="h-4 w-4 flex-shrink-0" />
             <span>本系统已针对手机端优化，请放心使用</span>
           </div>
 
+          <h2 className="text-xl font-bold text-slate-800 mb-4 text-center">请选择考试模块</h2>
+
+          <div className="space-y-4">
+            {workTypes.map((wt) => (
+              <Card 
+                key={wt.id} 
+                className="cursor-pointer hover:shadow-lg transition-all hover:border-blue-400"
+                onClick={() => handleSelectModule(wt.id)}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                      wt.id === 'confined_space' ? 'bg-purple-100' :
+                      wt.id === 'lifting' ? 'bg-orange-100' : 'bg-red-100'
+                    }`}>
+                      {wt.id === 'confined_space' ? (
+                        <ShieldCheck className={`h-7 w-7 text-purple-600`} />
+                      ) : wt.id === 'lifting' ? (
+                        <Users className={`h-7 w-7 text-orange-600`} />
+                      ) : (
+                        <Zap className={`h-7 w-7 text-red-600`} />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-slate-800">{wt.name}</h3>
+                      <p className="text-slate-500 text-sm mt-1">{wt.description}</p>
+                      <div className="flex gap-2 mt-2">
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                          {wt.questionCount.choice}道选择题
+                        </span>
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                          {wt.questionCount.judge}道判断题
+                        </span>
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                          {wt.questionCount.fill}道填空题
+                        </span>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-slate-400 self-center" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ==================== 信息填写页面 ====================
+  if (phase === 'info') {
+    const currentModule = workTypes.find(wt => wt.id === userInfo.examModule);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-100">
+        <header className="bg-blue-600 text-white py-4 px-4 shadow-lg sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setPhase('select')} className="text-white hover:bg-white/20">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-bold">个人信息填写</h1>
+              <p className="text-xs text-blue-200">正在参加：{currentModule?.name}</p>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-6">
           <Card className="shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl text-center">请填写个人信息</CardTitle>
@@ -221,17 +293,17 @@ export default function ExamPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="workType" className="text-base font-medium">工种 *</Label>
+                <label htmlFor="companyName" className="text-base font-medium">公司名称 *</label>
                 <Input
-                  id="workType"
-                  placeholder="例如：电焊工、架子工"
-                  value={userInfo.workType}
-                  onChange={(e) => setUserInfo({ ...userInfo, workType: e.target.value })}
+                  id="companyName"
+                  placeholder="请输入您的公司名称"
+                  value={userInfo.companyName}
+                  onChange={(e) => setUserInfo({ ...userInfo, companyName: e.target.value })}
                   className="mt-2 h-12 text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="name" className="text-base font-medium">姓名 *</Label>
+                <label htmlFor="name" className="text-base font-medium">姓名 *</label>
                 <Input
                   id="name"
                   placeholder="请输入您的真实姓名"
@@ -241,7 +313,7 @@ export default function ExamPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="idCard" className="text-base font-medium">身份证号 *</Label>
+                <label htmlFor="idCard" className="text-base font-medium">身份证号 *</label>
                 <Input
                   id="idCard"
                   placeholder="18位身份证号"
@@ -253,7 +325,7 @@ export default function ExamPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="phone" className="text-base font-medium">手机号 *</Label>
+                <label htmlFor="phone" className="text-base font-medium">手机号 *</label>
                 <Input
                   id="phone"
                   type="tel"
@@ -277,6 +349,7 @@ export default function ExamPage() {
 
   // ==================== 提交成功页面 ====================
   if (phase === 'submit' && submitResult) {
+    const currentModule = workTypes.find(wt => wt.id === userInfo.examModule);
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-slate-100 flex items-center justify-center p-4">
         <Card className="max-w-sm w-full text-center p-6 shadow-xl">
@@ -293,7 +366,8 @@ export default function ExamPage() {
           </div>
           <div className="text-sm text-slate-500 mb-6 space-y-1">
             <p>姓名：{userInfo.name}</p>
-            <p>工种：{userInfo.workType}</p>
+            <p>公司：{userInfo.companyName}</p>
+            <p>模块：{currentModule?.name}</p>
           </div>
           <Button onClick={() => router.push('/')} className="w-full h-12 text-lg">
             返回首页
@@ -427,6 +501,10 @@ export default function ExamPage() {
   }
 
   // ==================== 答题页面 ====================
+  if (examQuestions.length === 0) {
+    return null;
+  }
+
   const currentQuestion = examQuestions[currentIndex];
   const questionTypeLabel = currentQuestion.type === 'choice' ? '选择题' : currentQuestion.type === 'judge' ? '判断题' : '填空题';
   const questionScore = currentQuestion.type === 'choice' ? '5分' : currentQuestion.type === 'judge' ? '3分' : '6分';
@@ -469,7 +547,7 @@ export default function ExamPage() {
           <CardContent className="space-y-5">
             <p className="text-lg font-medium leading-relaxed">{currentQuestion.question}</p>
 
-            {/* 选择题 - 大按钮 */}
+            {/* 选择题 */}
             {currentQuestion.type === 'choice' && currentQuestion.options && (
               <div className="space-y-2">
                 {currentQuestion.options.map((option) => (
@@ -488,7 +566,7 @@ export default function ExamPage() {
               </div>
             )}
 
-            {/* 判断题 - 大按钮 */}
+            {/* 判断题 */}
             {currentQuestion.type === 'judge' && (
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -528,7 +606,7 @@ export default function ExamPage() {
               </div>
             )}
 
-            {/* 导航按钮 - 大按钮 */}
+            {/* 导航按钮 */}
             <div className="flex gap-3 pt-4 border-t">
               <Button
                 variant="outline"
@@ -559,7 +637,7 @@ export default function ExamPage() {
               )}
             </div>
 
-            {/* 快速跳转 - 网格布局 */}
+            {/* 快速跳转 */}
             <div className="pt-4 border-t">
               <p className="text-sm text-slate-500 mb-2">快速跳转：</p>
               <div className="grid grid-cols-10 gap-1">
