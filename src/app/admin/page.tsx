@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Search, Users, CheckCircle, XCircle, 
-  Calendar, Eye, Clock
+  Calendar, Eye, Clock, Building2, CreditCard, Phone
 } from 'lucide-react';
 import { workTypes } from '@/lib/questions';
 
@@ -110,6 +110,22 @@ export default function AdminPage() {
     });
   };
 
+  // 隐藏部分身份证号，保护隐私
+  const maskIdCard = (idCard: string) => {
+    if (idCard.length === 18) {
+      return idCard.substring(0, 6) + '********' + idCard.substring(14);
+    }
+    return idCard;
+  };
+
+  // 隐藏部分手机号，保护隐私
+  const maskPhone = (phone: string) => {
+    if (phone.length === 11) {
+      return phone.substring(0, 3) + '****' + phone.substring(7);
+    }
+    return phone;
+  };
+
   const parseAnswers = (answersStr: string) => {
     try {
       return JSON.parse(answersStr);
@@ -167,52 +183,102 @@ export default function AdminPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6">
+          {/* 基本信息卡片 */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>基本信息</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">姓名</p>
-                <p className="font-semibold">{selectedRecord.name}</p>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 姓名 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">姓名</span>
+                  </div>
+                  <p className="text-xl font-bold text-slate-800">{selectedRecord.name}</p>
+                </div>
+
+                {/* 公司名称 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">公司名称</span>
+                  </div>
+                  <p className="text-lg font-semibold text-slate-800">{selectedRecord.work_type}</p>
+                </div>
+
+                {/* 身份证号 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">身份证号</span>
+                  </div>
+                  <p className="text-lg font-mono font-semibold text-slate-800">{selectedRecord.id_card}</p>
+                </div>
+
+                {/* 手机号 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Phone className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">手机号</span>
+                  </div>
+                  <p className="text-lg font-semibold text-slate-800">{selectedRecord.phone}</p>
+                </div>
+
+                {/* 考试模块 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">考试模块</span>
+                  </div>
+                  <Badge variant="outline" className="text-sm">
+                    {getModuleName(selectedRecord.exam_module)}
+                  </Badge>
+                </div>
+
+                {/* 提交时间 */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm text-slate-500">提交时间</span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">{formatDate(selectedRecord.submitted_at)}</p>
+                </div>
               </div>
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">公司名称</p>
-                <p className="font-semibold text-sm">{selectedRecord.work_type}</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">身份证号</p>
-                <p className="font-semibold text-sm font-mono">{selectedRecord.id_card}</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">手机号</p>
-                <p className="font-semibold">{selectedRecord.phone}</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">考试模块</p>
-                <p className="font-semibold text-sm">{getModuleName(selectedRecord.exam_module)}</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500 mb-1">考试时间</p>
-                <p className="font-semibold text-sm">{formatDate(selectedRecord.submitted_at)}</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg md:col-span-2">
-                <p className="text-xs text-slate-500 mb-1">成绩</p>
-                <div className="flex items-center gap-2">
-                  <span className={`text-3xl font-bold ${selectedRecord.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedRecord.score}
-                  </span>
-                  <span className="text-slate-500">分</span>
-                  {selectedRecord.score >= 80 ? (
-                    <Badge className="bg-green-600">及格</Badge>
-                  ) : (
-                    <Badge className="bg-red-600">不及格</Badge>
-                  )}
+
+              {/* 成绩 */}
+              <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">考试成绩</p>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-5xl font-bold ${selectedRecord.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
+                        {selectedRecord.score}
+                      </span>
+                      <span className="text-2xl text-slate-400">分</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {selectedRecord.score >= 80 ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle className="h-8 w-8" />
+                        <span className="text-2xl font-bold">及格</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <XCircle className="h-8 w-8" />
+                        <span className="text-2xl font-bold">不及格</span>
+                      </div>
+                    )}
+                    <p className="text-sm text-slate-500 mt-1">及格分数：80分</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* 答题详情卡片 */}
           <Card>
             <CardHeader>
               <CardTitle>答题详情</CardTitle>
@@ -227,7 +293,7 @@ export default function AdminPage() {
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {Object.entries(answers).map(([questionId, answer], index) => (
                   <div key={questionId} className="bg-slate-50 p-3 rounded-lg flex items-start gap-3">
-                    <span className="font-semibold text-slate-600">{index + 1}.</span>
+                    <span className="font-semibold text-slate-600 min-w-[24px]">{index + 1}.</span>
                     <span className="flex-1">{String(answer)}</span>
                   </div>
                 ))}
@@ -337,9 +403,10 @@ export default function AdminPage() {
                   <tr>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm">姓名</th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden md:table-cell">公司名称</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden lg:table-cell">身份证号</th>
+                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden xl:table-cell">手机号</th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden lg:table-cell">考试模块</th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm">成绩</th>
-                    <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden sm:table-cell">提交时间</th>
                     <th className="text-center p-4 font-semibold text-slate-600 text-sm">操作</th>
                   </tr>
                 </thead>
@@ -350,7 +417,28 @@ export default function AdminPage() {
                         <div className="font-semibold">{record.name}</div>
                         <div className="text-sm text-slate-500 md:hidden">{record.work_type}</div>
                       </td>
-                      <td className="p-4 text-sm hidden md:table-cell">{record.work_type}</td>
+                      <td className="p-4 text-sm hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-3 w-3 text-slate-400" />
+                          <span className="max-w-[150px] truncate" title={record.work_type}>
+                            {record.work_type}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm hidden lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-3 w-3 text-slate-400" />
+                          <span className="font-mono text-xs" title={record.id_card}>
+                            {maskIdCard(record.id_card)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm hidden xl:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-3 w-3 text-slate-400" />
+                          <span>{maskPhone(record.phone)}</span>
+                        </div>
+                      </td>
                       <td className="p-4 hidden lg:table-cell">
                         <Badge variant="outline" className="text-xs">
                           {getModuleName(record.exam_module)}
@@ -364,12 +452,6 @@ export default function AdminPage() {
                             <XCircle className="h-4 w-4" />
                           )}
                           {record.score}分
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm text-slate-500 hidden sm:table-cell">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(record.submitted_at)}
                         </div>
                       </td>
                       <td className="p-4 text-center">
