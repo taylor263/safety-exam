@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { getQuestionsByWorkType, type WorkType } from '@/lib/questions';
 
+// 创建带 UTF-8 编码的响应
+function jsonResponse(data: any, status = 200) {
+  return new NextResponse(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+  });
+}
+
 // 获取存储的 token
 const storageToken = process.env.S3_STORAGE_TOKEN || '';
 
@@ -73,13 +83,13 @@ export async function GET(request: NextRequest) {
     
     if (error) {
       console.error('查询失败:', error);
-      return NextResponse.json({ success: false, error: '查询失败' }, { status: 500 });
+      return jsonResponse({ success: false, error: '查询失败' }, { status: 500 });
     }
     
-    return NextResponse.json({ success: true, data });
+    return jsonResponse({ success: true, data });
   } catch (error) {
     console.error('服务器错误:', error);
-    return NextResponse.json({ success: false, error: '服务器错误' }, { status: 500 });
+    return jsonResponse({ success: false, error: '服务器错误' }, { status: 500 });
   }
 }
 
@@ -101,7 +111,7 @@ export async function POST(request: NextRequest) {
     
     // 验证必填字段
     if (!companyName || !name || !idCard || !phone || !examModule) {
-      return NextResponse.json({ 
+      return jsonResponse({ 
         success: false, 
         error: '缺少必填字段：公司名称、姓名、身份证号、手机号、考试模块' 
       }, { status: 400 });
@@ -109,7 +119,7 @@ export async function POST(request: NextRequest) {
     
     // 验证身份证号格式
     if (!/^\d{17}[\dXx]$/.test(idCard)) {
-      return NextResponse.json({ 
+      return jsonResponse({ 
         success: false, 
         error: '身份证号格式不正确' 
       }, { status: 400 });
@@ -117,7 +127,7 @@ export async function POST(request: NextRequest) {
     
     // 验证手机号格式
     if (!/^1[3-9]\d{9}$/.test(phone)) {
-      return NextResponse.json({ 
+      return jsonResponse({ 
         success: false, 
         error: '手机号格式不正确' 
       }, { status: 400 });
@@ -128,7 +138,7 @@ export async function POST(request: NextRequest) {
     if (photo) {
       photoKey = await uploadPhoto(photo);
       if (!photoKey) {
-        return NextResponse.json({ 
+        return jsonResponse({ 
           success: false, 
           error: '照片上传失败，请重试' 
         }, { status: 500 });
@@ -190,20 +200,20 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('保存失败:', error);
-      return NextResponse.json({ 
+      return jsonResponse({ 
         success: false, 
         error: '保存考试记录失败' 
       }, { status: 500 });
     }
     
-    return NextResponse.json({ 
+    return jsonResponse({ 
       success: true, 
       message: '考试提交成功',
       data: { id: data.id, score: data.score }
     });
   } catch (error) {
     console.error('服务器错误:', error);
-    return NextResponse.json({ 
+    return jsonResponse({ 
       success: false, 
       error: '服务器错误' 
     }, { status: 500 });

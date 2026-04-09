@@ -8,6 +8,16 @@ const storage = new S3Storage({
   region: 'cn-beijing',
 });
 
+// 创建带 UTF-8 编码的响应
+function jsonResponse(data: any, status = 200) {
+  return new NextResponse(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+  });
+}
+
 // 获取单个考试记录详情
 export async function GET(
   request: NextRequest,
@@ -25,14 +35,14 @@ export async function GET(
 
     if (error) {
       console.error('查询失败:', error);
-      return NextResponse.json(
+      return jsonResponse(
         { error: '查询失败' },
         { status: 500 }
       );
     }
 
     if (!data) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: '记录不存在' },
         { status: 404 }
       );
@@ -51,7 +61,7 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    return jsonResponse({
       success: true,
       data: {
         ...data,
@@ -60,7 +70,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('获取考试记录失败:', error);
-    return NextResponse.json(
+    return jsonResponse(
       { error: '服务器错误' },
       { status: 500 }
     );
