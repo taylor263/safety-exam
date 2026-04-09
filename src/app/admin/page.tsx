@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import * as XLSX from 'xlsx';
 import { 
   ArrowLeft, Search, Users, CheckCircle, XCircle, 
   Calendar, Eye, Clock, Building2, CreditCard, Phone,
-  FileText, CircleDot, CheckSquare, AlignLeft
+  FileText, CircleDot, CheckSquare, AlignLeft, Download, Image, Camera
 } from 'lucide-react';
 import { workTypes } from '@/lib/questions';
 
@@ -101,6 +102,98 @@ export default function AdminPage() {
     sessionStorage.removeItem('admin_auth');
     setIsAuthenticated(false);
     setPassword('');
+  };
+
+  // 获取照片URL
+  const getPhotoUrl = async (photoKey: string): Promise<string> => {
+    if (!photoKey) return '';
+    try {
+      const response = await fetch(`/api/exam/records/${photoKey}`);
+      const data = await response.json();
+      return data.data?.photo_url || '';
+    } catch {
+      return '';
+    }
+  };
+
+  // 导出所有记录到Excel
+  const exportToExcel = async () => {
+    setLoading(true);
+    try {
+      // 获取所有照片URL
+      const recordsWithPhotos = await Promise.all(
+        filteredRecords.map(async (record) => {
+          const photoUrl = await getPhotoUrl(record.photo_key);
+          return {
+            ...record,
+            photoUrl,
+          };
+        })
+      );
+
+      // 准备Excel数据
+      const exportData = recordsWithPhotos.map((record, index) => {
+        const answers = parseAnswers(record.answers);
+        const stats = getAnswerStats(answers);
+        const module = getModuleName(record.exam_module);
+        const passStatus = record.score >= 80 ? '及格' : '不及格';
+        
+        return {
+          '序号': index + 1,
+          '姓名': record.name,
+          '公司名称': record.work_type,
+          '身份证号': record.id_card,
+          '手机号': record.phone,
+          '考试模块': module,
+          '考试时间': formatDate(record.submitted_at),
+          '考试成绩': record.score,
+          '及格状态': passStatus,
+          '总题数': stats.total,
+          '答对题数': stats.correct,
+          '答错题数': stats.total - stats.correct,
+          '正确率': `${stats.accuracy}%`,
+          '选择题对错': `${stats.correctChoice}/${stats.choiceCount}`,
+          '判断题对错': `${stats.correctJudge}/${stats.judgeCount}`,
+          '填空题对错': `${stats.correctFill}/${stats.fillCount}`,
+          '照片': record.photoUrl || '无照片',
+        };
+      });
+
+      // 创建工作簿
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试记录');
+
+      // 设置列宽
+      ws['!cols'] = [
+        { wch: 6 },   // 序号
+        { wch: 10 },  // 姓名
+        { wch: 25 },  // 公司名称
+        { wch: 20 },  // 身份证号
+        { wch: 15 },  // 手机号
+        { wch: 15 },  // 考试模块
+        { wch: 20 },  // 考试时间
+        { wch: 10 },  // 考试成绩
+        { wch: 10 },  // 及格状态
+        { wch: 8 },   // 总题数
+        { wch: 10 },  // 答对题数
+        { wch: 10 },  // 答错题数
+        { wch: 10 },  // 正确率
+        { wch: 12 },  // 选择题对错
+        { wch: 12 },  // 判断题对错
+        { wch: 12 },  // 填空题对错
+        { wch: 40 },  // 照片URL
+      ];
+
+      // 下载Excel
+      const fileName = `安全生产培训考核_${formatDate(new Date().toISOString())}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('导出失败', err);
+      alert('导出失败，请重试');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getModuleName = (module: string) => {
@@ -336,6 +429,19 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* 照片凭证 */}
+              {selectedRecord.photo_key && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Camera className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm font-semibold text-slate-700">答题照片凭证</span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <PhotoDisplay photoKey={selectedRecord.photo_key} />
+                  </div>
+                </div>
+              )}
+
               {/* 成绩 */}
               <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
                 <div className="flex items-center justify-between">
@@ -506,9 +612,15 @@ export default function AdminPage() {
               <p className="text-xs text-blue-200">共 {records.length} 条记录</p>
             </div>
           </div>
-          <Button variant="secondary" onClick={handleLogout} className="bg-white/20 text-white hover:bg-white/30 border-0">
-            退出登录
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={exportToExcel} className="bg-green-500 hover:bg-green-600 text-white border-0">
+              <Download className="h-4 w-4 mr-2" />
+              导出Excel
+            </Button>
+            <Button variant="secondary" onClick={handleLogout} className="bg-white/20 text-white hover:bg-white/30 border-0">
+              退出登录
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -789,4 +901,85 @@ function getQuestionTypeInfo(type: string | null) {
     default:
       return { label: '未知', icon: FileText, color: 'text-slate-600 bg-slate-50' };
   }
+}
+
+// 照片显示组件
+function PhotoDisplay({ photoKey }: { photoKey: string }) {
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchPhotoUrl = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const response = await fetch(`/api/exam/records/${photoKey}`);
+        const data = await response.json();
+        if (data.success && data.data?.photo_url) {
+          setPhotoUrl(data.data.photo_url);
+        } else {
+          setError(true);
+        }
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (photoKey) {
+      fetchPhotoUrl();
+    }
+  }, [photoKey]);
+
+  const downloadPhoto = () => {
+    if (photoUrl) {
+      const link = document.createElement('a');
+      link.href = photoUrl;
+      link.download = `考试照片_${photoKey}.jpg`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (error || !photoUrl) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+        <Image className="h-12 w-12 mb-2" />
+        <p>照片加载失败</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <img 
+          src={photoUrl} 
+          alt="答题照片" 
+          className="w-full max-h-96 object-contain rounded-lg border border-slate-200"
+        />
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={downloadPhoto}
+        className="w-full"
+      >
+        <Download className="h-4 w-4 mr-2" />
+        下载照片
+      </Button>
+    </div>
+  );
 }
