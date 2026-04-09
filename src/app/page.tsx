@@ -164,32 +164,34 @@ export default function HomePage() {
           <p>请确保在安静、光线充足的环境中进行考试</p>
         </div>
 
-        {/* 版权保护信息 */}
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="bg-slate-100 rounded-xl p-6 text-center">
-            {/* DEC品牌标识 */}
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <svg width="48" height="30" viewBox="0 0 36 22" className="scale-125">
-                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#1f2937" strokeWidth="1.5"/>
-                <text x="18" y="15" textAnchor="middle" fill="#1f2937" fontSize="10" fontWeight="bold" fontFamily="serif">DEC</text>
-              </svg>
-              <div className="text-left">
-                <div className="text-sm font-bold text-slate-800 leading-tight">东方电气</div>
-                <div className="text-xs text-slate-500 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
+        {/* 版权保护信息 - 蓝色主题，左上角DEC标识 */}
+        <div className="mt-12">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl overflow-hidden">
+            {/* 顶部蓝色标识条 - 左上角DEC */}
+            <div className="bg-blue-700 px-4 py-3">
+              <div className="flex items-center gap-3">
+                {/* DEC椭圆Logo */}
+                <svg width="40" height="24" viewBox="0 0 36 22">
+                  <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                  <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">DEC</text>
+                </svg>
+                <div className="text-left">
+                  <div className="text-sm font-bold text-white leading-tight">东方电气</div>
+                  <div className="text-xs text-blue-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
+                </div>
+                <div className="ml-auto text-xs text-blue-200">安全生产培训</div>
               </div>
             </div>
             
-            {/* 版权声明 */}
-            <div className="space-y-2 text-slate-600">
-              <p className="text-xs">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
-              <p className="text-xs text-slate-400">
-                版权所有 · 保留一切权利
-              </p>
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500">
-                  本系统由 <span className="font-semibold text-slate-700">蒋曦</span> 制作
+            {/* 版权信息主体 */}
+            <div className="px-6 py-5 text-center">
+              <p className="text-white text-sm mb-1">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
+              <p className="text-blue-200 text-xs mb-3">版权所有 · 保留一切权利</p>
+              <div className="pt-3 border-t border-blue-400/30">
+                <p className="text-white text-sm">
+                  本系统由 <span className="font-semibold">蒋曦</span> 制作
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-blue-200 text-xs mt-1">
                   严禁未经授权的复制、传播或商业使用
                 </p>
               </div>

@@ -217,17 +217,22 @@ export default function AdminPage() {
             </Button>
           </CardContent>
           
-          {/* 版权保护信息 */}
-          <div className="px-6 pb-6 text-center border-t border-slate-100 pt-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <svg width="24" height="15" viewBox="0 0 36 22">
-                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
-                <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
-              </svg>
-              <span className="text-xs text-slate-400">东方电气</span>
+          {/* 版权保护信息 - 蓝色主题 */}
+          <div className="mx-6 mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg overflow-hidden">
+            <div className="bg-blue-700 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <svg width="28" height="17" viewBox="0 0 36 22">
+                  <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                  <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">DEC</text>
+                </svg>
+                <span className="text-xs text-white font-medium">东方电气</span>
+                <span className="ml-auto text-xs text-blue-200">管理端</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
-            <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 制作</p>
+            <div className="px-4 py-3 text-center">
+              <p className="text-white text-xs">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
+              <p className="text-blue-200 text-xs mt-1">本系统由 <span className="text-white">蒋曦</span> 制作</p>
+            </div>
           </div>
         </Card>
       </div>
@@ -659,17 +664,22 @@ export default function AdminPage() {
           </Card>
         )}
 
-        {/* 版权保护信息 */}
-        <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <svg width="24" height="15" viewBox="0 0 36 22">
-              <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
-              <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
-            </svg>
-            <span className="text-xs text-slate-400">东方电气</span>
+        {/* 版权保护信息 - 蓝色主题 */}
+        <div className="mt-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg overflow-hidden">
+          <div className="bg-blue-700 px-4 py-2">
+            <div className="flex items-center gap-2">
+              <svg width="28" height="17" viewBox="0 0 36 22">
+                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">DEC</text>
+              </svg>
+              <span className="text-xs text-white font-medium">东方电气</span>
+              <span className="ml-auto text-xs text-blue-200">管理端</span>
+            </div>
           </div>
-          <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
-          <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 制作</p>
+          <div className="px-4 py-3 text-center">
+            <p className="text-white text-xs">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
+            <p className="text-blue-200 text-xs mt-1">本系统由 <span className="text-white">蒋曦</span> 制作</p>
+          </div>
         </div>
       </main>
     </div>
