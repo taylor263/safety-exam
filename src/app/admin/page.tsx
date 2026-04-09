@@ -125,6 +125,7 @@ export default function AdminPage() {
         return;
       }
       
+      // 第一部分：考试记录汇总
       const exportData = filteredRecords.map((record, index) => {
         const answers = parseAnswers(record.answers);
         const stats = getAnswerStats(answers);
@@ -152,13 +153,69 @@ export default function AdminPage() {
         };
       });
 
-      // 创建工作簿
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, '考试记录');
+      // 第二部分：答题详情（试卷内容）
+      const examDetails: Array<Record<string, string | number>> = [];
+      const typeNameMap: Record<string, string> = {
+        'choice': '选择题',
+        'judge': '判断题',
+        'fill': '填空题'
+      };
+      
+      filteredRecords.forEach((record, recordIndex) => {
+        const answers = parseAnswers(record.answers);
+        const examModule = getModuleName(record.exam_module);
+        
+        answers.forEach((answer, qIndex) => {
+          const typeName = typeNameMap[answer.type || ''] || answer.type || '未知';
+          
+          // 处理选项显示
+          let userAnswerDisplay = answer.userAnswer || '';
+          let correctAnswerDisplay = answer.correctAnswer || '';
+          
+          // 如果是选择题，显示选项文本而非字母
+          if (answer.type === 'choice' && answer.options && Array.isArray(answer.options)) {
+            // 找到用户选择的选项
+            const userIdx = ['A', 'B', 'C', 'D', 'E', 'F'].indexOf(answer.userAnswer?.toUpperCase());
+            if (userIdx >= 0 && answer.options[userIdx]) {
+              userAnswerDisplay = `${answer.userAnswer}. ${answer.options[userIdx]}`;
+            }
+            // 找到正确答案的选项
+            const correctIdx = ['A', 'B', 'C', 'D', 'E', 'F'].indexOf(answer.correctAnswer?.toUpperCase());
+            if (correctIdx >= 0 && answer.options[correctIdx]) {
+              correctAnswerDisplay = `${answer.correctAnswer}. ${answer.options[correctIdx]}`;
+            }
+          }
+          
+          examDetails.push({
+            '序号': recordIndex + 1,
+            '姓名': record.name,
+            '公司名称': record.work_type,
+            '考试模块': examModule,
+            '考试时间': formatDate(record.submitted_at),
+            '题号': qIndex + 1,
+            '题目类型': typeName,
+            '题目内容': (answer.question || '').substring(0, 500), // 限制长度
+            '用户答案': userAnswerDisplay.substring(0, 200),
+            '正确答案': correctAnswerDisplay.substring(0, 200),
+            '是否正确': answer.isCorrect ? '正确' : '错误',
+            '解析': (answer.explanation || '').substring(0, 500),
+          });
+        });
+      });
 
-      // 设置列宽
-      ws['!cols'] = [
+      // 创建工作簿
+      const wb = XLSX.utils.book_new();
+      
+      // 第一张表：考试记录汇总
+      const ws1 = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws1, '考试记录');
+      
+      // 第二张表：答题详情（试卷）
+      const ws2 = XLSX.utils.json_to_sheet(examDetails.length > 0 ? examDetails : [{ '提示': '暂无答题详情数据' }]);
+      XLSX.utils.book_append_sheet(wb, ws2, '答题详情');
+
+      // 设置考试记录表的列宽
+      ws1['!cols'] = [
         { wch: 6 },   // 序号
         { wch: 10 },  // 姓名
         { wch: 25 },  // 公司名称
@@ -178,6 +235,22 @@ export default function AdminPage() {
         { wch: 8 },   // 有照片
       ];
 
+      // 设置答题详情表的列宽
+      ws2['!cols'] = [
+        { wch: 6 },   // 序号
+        { wch: 10 },  // 姓名
+        { wch: 20 },  // 公司名称
+        { wch: 12 },  // 考试模块
+        { wch: 18 },  // 考试时间
+        { wch: 6 },   // 题号
+        { wch: 8 },   // 题目类型
+        { wch: 50 },  // 题目内容
+        { wch: 30 },  // 用户答案
+        { wch: 30 },  // 正确答案
+        { wch: 8 },   // 是否正确
+        { wch: 50 },  // 解析
+      ];
+
       // 生成Excel文件并下载
       try {
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -192,7 +265,7 @@ export default function AdminPage() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        console.log('Excel导出成功:', filename);
+        console.log('Excel导出成功:', filename, '- 包含', examDetails.length, '条答题记录');
       } catch (err) {
         console.error('Excel生成失败', err);
         alert('导出失败，请重试');
