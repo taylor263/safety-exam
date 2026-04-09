@@ -218,16 +218,8 @@ export default function AdminPage() {
           </CardContent>
           
           {/* 版权保护信息 */}
-          <div className="px-6 pb-6 text-center border-t border-slate-100 pt-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <svg width="24" height="15" viewBox="0 0 36 22">
-                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
-                <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
-              </svg>
-              <span className="text-xs text-slate-400">东方电气</span>
-            </div>
-            <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料</p>
-            <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 精心制作</p>
+          <div className="px-6 pb-6 text-center text-slate-400 text-xs border-t border-slate-100 pt-4">
+            <p>制作：蒋曦</p>
           </div>
         </Card>
       </div>
@@ -660,16 +652,8 @@ export default function AdminPage() {
         )}
 
         {/* 版权保护信息 */}
-        <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <svg width="24" height="15" viewBox="0 0 36 22">
-              <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
-              <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
-            </svg>
-            <span className="text-xs text-slate-400">东方电气</span>
-          </div>
-          <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料</p>
-          <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 精心制作</p>
+        <div className="mt-6 text-center text-slate-400 text-xs">
+          <p>制作：蒋曦</p>
         </div>
       </main>
     </div>

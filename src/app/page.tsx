@@ -165,36 +165,8 @@ export default function HomePage() {
         </div>
 
         {/* 版权保护信息 */}
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="bg-slate-100 rounded-xl p-6 text-center">
-            {/* DEC品牌标识 */}
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <svg width="48" height="30" viewBox="0 0 36 22" className="scale-125">
-                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#1f2937" strokeWidth="1.5"/>
-                <text x="18" y="15" textAnchor="middle" fill="#1f2937" fontSize="10" fontWeight="bold" fontFamily="serif">DEC</text>
-              </svg>
-              <div className="text-left">
-                <div className="text-sm font-bold text-slate-800 leading-tight">东方电气</div>
-                <div className="text-xs text-slate-500 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
-              </div>
-            </div>
-            
-            {/* 版权声明 */}
-            <div className="space-y-2 text-slate-600">
-              <p className="text-xs">© {new Date().getFullYear()} 东方电气精细电子材料有限公司</p>
-              <p className="text-xs text-slate-400">
-                版权所有 · 保留一切权利
-              </p>
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500">
-                  本系统由 <span className="font-semibold text-slate-700">蒋曦</span> 精心制作
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  严禁未经授权的复制、传播或商业使用
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-12 pt-6 text-center text-slate-400 text-sm">
+          <p>制作：蒋曦</p>
         </div>
       </main>
     </div>
