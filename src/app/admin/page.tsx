@@ -448,7 +448,7 @@ export default function AdminPage() {
                     <span className="text-sm font-semibold text-slate-700">答题照片凭证</span>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <PhotoDisplay photoKey={selectedRecord.photo_key} />
+                    <PhotoDisplay recordId={selectedRecord.id} photoKey={selectedRecord.photo_key} />
                   </div>
                 </div>
               )}
@@ -915,7 +915,7 @@ function getQuestionTypeInfo(type: string | null) {
 }
 
 // 照片显示组件
-function PhotoDisplay({ photoKey }: { photoKey: string }) {
+function PhotoDisplay({ recordId, photoKey }: { recordId: string; photoKey: string }) {
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -925,7 +925,8 @@ function PhotoDisplay({ photoKey }: { photoKey: string }) {
       setLoading(true);
       setError(false);
       try {
-        const response = await fetch(`/api/exam/records/${photoKey}`);
+        // 使用 recordId 获取照片 URL
+        const response = await fetch(`/api/exam/records/${recordId}`);
         const data = await response.json();
         if (data.success && data.data?.photo_url) {
           setPhotoUrl(data.data.photo_url);
@@ -939,10 +940,10 @@ function PhotoDisplay({ photoKey }: { photoKey: string }) {
       }
     };
     
-    if (photoKey) {
+    if (recordId) {
       fetchPhotoUrl();
     }
-  }, [photoKey]);
+  }, [recordId]);
 
   const downloadPhoto = () => {
     if (photoUrl) {
