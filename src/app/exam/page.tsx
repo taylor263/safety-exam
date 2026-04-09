@@ -714,7 +714,7 @@ function ExamContent() {
                   className="flex-1 h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md"
                 >
                   完成答题
-                  <Upload className="h-4 w-4 ml-2" />
+                  <Camera className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
                 <Button
