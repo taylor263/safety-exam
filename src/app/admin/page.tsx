@@ -117,33 +117,11 @@ export default function AdminPage() {
   };
 
   // 导出所有记录到Excel
-  const exportToExcel = async () => {
+  const exportToExcel = () => {
     setLoading(true);
     try {
-      // 获取所有照片URL - 使用记录ID而不是photo_key
-      const recordsWithPhotos = await Promise.all(
-        filteredRecords.map(async (record) => {
-          let photoUrl = '';
-          if (record.photo_key) {
-            try {
-              const response = await fetch(`/api/exam/records/${record.id}`);
-              const data = await response.json();
-              if (data.success && data.data?.photo_url) {
-                photoUrl = data.data.photo_url;
-              }
-            } catch {
-              // 忽略单个记录获取失败
-            }
-          }
-          return {
-            ...record,
-            photoUrl,
-          };
-        })
-      );
-
-      // 准备Excel数据
-      const exportData = recordsWithPhotos.map((record, index) => {
+      // 直接导出，不获取照片URL
+      const exportData = filteredRecords.map((record, index) => {
         const answers = parseAnswers(record.answers);
         const stats = getAnswerStats(answers);
         const module = getModuleName(record.exam_module);
@@ -166,7 +144,7 @@ export default function AdminPage() {
           '选择题对错': `${stats.correctChoice}/${stats.choiceCount}`,
           '判断题对错': `${stats.correctJudge}/${stats.judgeCount}`,
           '填空题对错': `${stats.correctFill}/${stats.fillCount}`,
-          '照片': record.photoUrl || '无照片',
+          '有照片': record.photo_key ? '有' : '无',
         };
       });
 
@@ -193,7 +171,7 @@ export default function AdminPage() {
         { wch: 12 },  // 选择题对错
         { wch: 12 },  // 判断题对错
         { wch: 12 },  // 填空题对错
-        { wch: 40 },  // 照片URL
+        { wch: 8 },   // 有照片
       ];
 
       // 下载Excel
