@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<ExamRecord | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -71,6 +72,26 @@ export default function AdminPage() {
       setFilteredRecords(records);
     }
   }, [searchTerm, records]);
+
+  // 全选/取消全选
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredRecords.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRecords.map(r => String(r.id))));
+    }
+  };
+
+  // 选择/取消选择单条记录
+  const toggleSelectRecord = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
 
   const handleLogin = () => {
     if (password === 'admin123') {
@@ -198,10 +219,10 @@ export default function AdminPage() {
     }
   };
 
-  // 导出答题试卷PDF
+  // 导出答题试卷PDF（只导出选中的记录）
   const exportToPdf = async () => {
-    if (filteredRecords.length === 0) {
-      alert('没有可导出的记录');
+    if (selectedIds.size === 0) {
+      alert('请先选择要导出的考生');
       return;
     }
 
@@ -214,54 +235,54 @@ export default function AdminPage() {
       const html2canvas = html2canvasModule.default;
       const { jsPDF } = jsPDFModule;
       
-      // 创建隐藏容器
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '800px';
-      container.style.background = '#fff';
-      container.style.padding = '20px';
-      container.style.fontFamily = 'Microsoft YaHei, SimSun, sans-serif';
-      document.body.appendChild(container);
-
+      // 获取选中的记录
+      const selectedRecords = filteredRecords.filter(r => selectedIds.has(String(r.id)));
+      
+      if (selectedRecords.length === 0) {
+        alert('没有找到选中的记录');
+        return;
+      }
+      
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
       const typeNameMap: Record<string, string> = {
         'choice': '选择题',
         'judge': '判断题',
         'fill': '填空题'
       };
 
-      for (let i = 0; i < filteredRecords.length; i++) {
-        const record = filteredRecords[i];
+      for (const record of selectedRecords) {
         const answers = parseAnswers(record.answers);
         if (!Array.isArray(answers) || answers.length === 0) continue;
         
         const examModule = getModuleName(record.exam_module);
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        const scoreColor = record.score >= 80 ? '#16a34a' : '#dc2626';
+        const scoreText = record.score >= 80 ? '是' : '否';
         
-        // 构建HTML内容
+        // 构建HTML内容（纯内联样式，避免tailwind冲突）
         let htmlContent = `
-          <div style="max-width: 800px; margin: 0 auto; font-family: Microsoft YaHei, SimSun, sans-serif;">
-            <h1 style="text-align: center; font-size: 24px; color: #1e40af; margin-bottom: 20px;">安全生产培训考核试卷</h1>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
-              <div>
-                <p><strong>姓名：</strong>${record.name}</p>
-                <p><strong>公司：</strong>${record.work_type}</p>
-                <p><strong>模块：</strong>${examModule}</p>
-                <p><strong>时间：</strong>${formatDate(record.submitted_at)}</p>
+          <div style="width: 800px; margin: 0 auto; font-family: 'Microsoft YaHei', 'SimSun', Arial, sans-serif; background: #ffffff;">
+            <h1 style="text-align: center; font-size: 28px; color: #1e40af; margin: 0 0 30px 0; padding: 20px 0; border-bottom: 3px solid #1e40af;">安全生产培训考核试卷</h1>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px; padding: 20px; background: #f1f5f9; border-radius: 10px;">
+              <div style="flex: 1;">
+                <p style="margin: 8px 0; font-size: 16px;"><strong>姓名：</strong>${record.name}</p>
+                <p style="margin: 8px 0; font-size: 16px;"><strong>公司：</strong>${record.work_type}</p>
+                <p style="margin: 8px 0; font-size: 16px;"><strong>考试模块：</strong>${examModule}</p>
+                <p style="margin: 8px 0; font-size: 16px;"><strong>考试时间：</strong>${formatDate(record.submitted_at)}</p>
               </div>
-              <div style="text-align: right;">
-                <p><strong>成绩：</strong><span style="font-size: 24px; color: ${record.score >= 80 ? '#16a34a' : '#dc2626'};">${record.score}分</span></p>
-                <p><strong>及格：</strong>${record.score >= 80 ? '<span style="color: #16a34a;">是</span>' : '<span style="color: #dc2626;">否</span>'}</p>
+              <div style="flex: 0 0 auto; text-align: right;">
+                <p style="margin: 8px 0; font-size: 16px;"><strong>考试成绩：</strong><span style="font-size: 32px; font-weight: bold; color: ${scoreColor};">${record.score}分</span></p>
+                <p style="margin: 8px 0; font-size: 16px;"><strong>是否及格：</strong><span style="font-weight: bold; color: ${scoreColor};">${scoreText}</span></p>
               </div>
             </div>
-            <hr style="border: 1px solid #e2e8f0; margin: 20px 0;"/>
         `;
 
         answers.forEach((answer, index) => {
           const typeName = typeNameMap[answer.type || ''] || '未知';
           const resultColor = answer.isCorrect ? '#16a34a' : '#dc2626';
+          const bgColor = answer.isCorrect ? '#f0fdf4' : '#fef2f2';
+          const borderColor = answer.isCorrect ? '#bbf7d0' : '#fecaca';
           
           let optionsHtml = '';
           if (answer.type === 'choice' && answer.options && Array.isArray(answer.options)) {
@@ -269,11 +290,17 @@ export default function AdminPage() {
               const letter = String.fromCharCode(65 + optIdx);
               const isUserChoice = answer.userAnswer?.toUpperCase() === letter;
               const isCorrectChoice = answer.correctAnswer?.toUpperCase() === letter;
-              let style = 'padding: 5px 10px; margin: 3px 0;';
-              if (isCorrectChoice) style += ' background: #dcfce7; color: #16a34a; font-weight: bold;';
-              else if (isUserChoice) style += ' background: #fee2e2; color: #dc2626;';
-              return `<div style="${style}">${letter}. ${opt}</div>`;
+              let optStyle = 'padding: 10px 15px; margin: 5px 0; border-radius: 5px; font-size: 15px;';
+              if (isCorrectChoice) {
+                optStyle += ' background: #dcfce7; color: #15803d; font-weight: bold; border: 2px solid #22c55e;';
+              } else if (isUserChoice && !answer.isCorrect) {
+                optStyle += ' background: #fee2e2; color: #dc2626; font-weight: bold; border: 2px solid #ef4444;';
+              } else {
+                optStyle += ' background: #f8fafc; color: #475569;';
+              }
+              return `<div style="${optStyle}">${letter}. ${opt}</div>`;
             }).join('');
+            optionsHtml = `<div style="margin: 15px 0 10px 20px;">${optionsHtml}</div>`;
           }
 
           let userAnsDisplay = answer.userAnswer || '未作答';
@@ -290,72 +317,121 @@ export default function AdminPage() {
           }
 
           htmlContent += `
-            <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <p style="margin: 0 0 10px 0;"><strong>${index + 1}. 【${typeName}】</strong></p>
-              <p style="margin: 0 0 10px 0; line-height: 1.6;">${answer.question || ''}</p>
-              ${optionsHtml ? `<div style="margin: 10px 0;">${optionsHtml}</div>` : ''}
-              <div style="margin-top: 10px; padding: 10px; background: ${answer.isCorrect ? '#f0fdf4' : '#fef2f2'}; border-radius: 4px;">
-                <p style="margin: 3px 0;"><strong>你的答案：</strong><span style="color: ${resultColor};">${userAnsDisplay}</span></p>
-                ${answer.type !== 'judge' ? `<p style="margin: 3px 0;"><strong>正确答案：</strong><span style="color: #16a34a;">${correctAnsDisplay}</span></p>` : ''}
-                <p style="margin: 3px 0;"><strong>结果：</strong><span style="color: ${resultColor};">${answer.isCorrect ? '✓ 正确' : '✗ 错误'}</span></p>
-                ${answer.explanation ? `<p style="margin: 5px 0 0 0; font-size: 12px; color: #64748b;"><strong>解析：</strong>${answer.explanation}</p>` : ''}
+            <div style="margin-bottom: 25px; padding: 20px; border: 2px solid ${borderColor}; border-radius: 10px; background: #ffffff;">
+              <p style="margin: 0 0 15px 0; font-size: 18px; color: #1e40af;"><strong>${index + 1}. 【${typeName}】</strong></p>
+              <p style="margin: 0 0 15px 0; font-size: 16px; line-height: 1.8; color: #1e293b;">${answer.question || ''}</p>
+              ${optionsHtml}
+              <div style="margin-top: 15px; padding: 15px; background: ${bgColor}; border-radius: 8px;">
+                <p style="margin: 5px 0; font-size: 15px;"><strong>你的答案：</strong><span style="color: ${resultColor}; font-weight: bold;">${userAnsDisplay}</span></p>
+                ${answer.type !== 'judge' ? `<p style="margin: 5px 0; font-size: 15px;"><strong>正确答案：</strong><span style="color: #16a34a; font-weight: bold;">${correctAnsDisplay}</span></p>` : ''}
+                <p style="margin: 5px 0; font-size: 15px;"><strong>答题结果：</strong><span style="color: ${resultColor}; font-weight: bold; font-size: 18px;">${answer.isCorrect ? '✓ 正确' : '✗ 错误'}</span></p>
+                ${answer.explanation ? `<p style="margin: 10px 0 0 0; font-size: 14px; color: #64748b; line-height: 1.6;"><strong>解析：</strong>${answer.explanation}</p>` : ''}
               </div>
             </div>
           `;
         });
 
         htmlContent += '</div>';
-        container.innerHTML = htmlContent;
-
-        // 等待DOM更新
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // 使用html2canvas渲染
-        const canvas = await html2canvas(container, {
+        
+        // 使用 Blob URL 创建独立的HTML页面渲染
+        const blob = new Blob([`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Microsoft YaHei', 'SimSun', Arial, sans-serif; background: #ffffff; padding: 20px; }
+            </style>
+          </head>
+          <body>${htmlContent}</body>
+          </html>
+        `], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // 创建隐藏的 iframe 加载 blob URL
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.width = '850px';
+        iframe.style.height = '1000px';
+        iframe.style.border = 'none';
+        iframe.src = blobUrl;
+        document.body.appendChild(iframe);
+        
+        // 等待 iframe 加载完成
+        await new Promise<void>((resolve) => {
+          iframe.onload = () => resolve();
+          setTimeout(resolve, 1000); // 超时保护
+        });
+        
+        // 使用html2canvas渲染iframe内容
+        const iframeDoc = iframe.contentDocument;
+        const iframeBody = iframeDoc?.body;
+        
+        if (!iframeBody) {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(blobUrl);
+          continue;
+        }
+        
+        const canvas = await html2canvas(iframeBody, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          width: 850,
+          scrollY: 0,
+          windowHeight: iframeBody.scrollHeight,
+          // 使用 onclone 确保样式隔离
+          onclone: (clonedDoc) => {
+            const clonedBody = clonedDoc.body;
+            if (clonedBody) {
+              clonedBody.style.cssText = 'margin: 0 !important; padding: 20px !important; background: #ffffff !important;';
+              // 重置所有元素的计算样式
+              const allElements = clonedBody.querySelectorAll('*');
+              allElements.forEach(el => {
+                el.style.cssText += 'background: inherit !important;';
+              });
+            }
+          }
         });
 
         // 创建PDF
-        const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
           format: 'a4'
         });
 
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 297; // A4 height in mm
+        const imgWidth = 210;
+        const pageHeight = 297;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         let heightLeft = imgHeight;
         let position = 0;
 
-        // 添加第一页
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
 
-        // 添加后续页面
         while (heightLeft >= 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
           heightLeft -= pageHeight;
         }
 
-        // 保存文件
         const filename = `考试试卷_${record.name}_${dateStr}.pdf`;
         pdf.save(filename);
         console.log('PDF导出成功:', filename);
         
-        // 清除当前内容，准备下一个
-        container.innerHTML = '';
+        // 清理
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(blobUrl);
       }
 
-      // 清理
-      document.body.removeChild(container);
-      alert(`已导出 ${filteredRecords.length} 份试卷PDF`);
+      alert(`已导出 ${selectedRecords.length} 份试卷PDF`);
     } catch (err) {
       console.error('PDF导出失败', err);
       alert('PDF导出失败，请重试');
@@ -781,6 +857,11 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {selectedIds.size > 0 && (
+              <span className="text-sm text-white/90 bg-white/20 px-3 py-1 rounded-full">
+                已选 {selectedIds.size} 人
+              </span>
+            )}
             <Button variant="secondary" onClick={exportToExcel} className="bg-green-500 hover:bg-green-600 text-white border-0">
               <Download className="h-4 w-4 mr-2" />
               导出Excel
@@ -872,6 +953,14 @@ export default function AdminPage() {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b">
                   <tr>
+                    <th className="p-4 w-12">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.size === filteredRecords.length && filteredRecords.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm">姓名</th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden md:table-cell">公司名称</th>
                     <th className="text-left p-4 font-semibold text-slate-600 text-sm hidden lg:table-cell">身份证号</th>
@@ -883,7 +972,15 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {filteredRecords.map((record) => (
-                    <tr key={record.id} className="border-b hover:bg-slate-50 transition-colors">
+                    <tr key={record.id} className={`border-b transition-colors ${selectedIds.has(String(record.id)) ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-slate-50'}`}>
+                      <td className="p-4">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedIds.has(String(record.id))}
+                          onChange={() => toggleSelectRecord(String(record.id))}
+                          className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
                       <td className="p-4">
                         <div className="font-semibold">{record.name}</div>
                         <div className="text-sm text-slate-500 md:hidden">{record.work_type}</div>
