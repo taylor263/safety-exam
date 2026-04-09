@@ -120,10 +120,21 @@ export default function AdminPage() {
   const exportToExcel = async () => {
     setLoading(true);
     try {
-      // 获取所有照片URL
+      // 获取所有照片URL - 使用记录ID而不是photo_key
       const recordsWithPhotos = await Promise.all(
         filteredRecords.map(async (record) => {
-          const photoUrl = await getPhotoUrl(record.photo_key);
+          let photoUrl = '';
+          if (record.photo_key) {
+            try {
+              const response = await fetch(`/api/exam/records/${record.id}`);
+              const data = await response.json();
+              if (data.success && data.data?.photo_url) {
+                photoUrl = data.data.photo_url;
+              }
+            } catch {
+              // 忽略单个记录获取失败
+            }
+          }
           return {
             ...record,
             photoUrl,
