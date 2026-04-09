@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Upload, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone, Shield, Users, Zap } from 'lucide-react';
+import { Camera, ArrowLeft, ArrowRight, Send, CheckCircle, Smartphone, Shield, Users, Zap } from 'lucide-react';
 import { getQuestionsByWorkType, workTypes, shuffleArray, type Question, type WorkType } from '@/lib/questions';
 
 type ExamPhase = 'select' | 'info' | 'exam' | 'camera' | 'submit';
@@ -87,7 +87,6 @@ function ExamContent() {
   const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [phase, setPhase] = useState<ExamPhase>('select');
   const [userInfo, setUserInfo] = useState<UserInfo>({
@@ -206,17 +205,6 @@ function ExamContent() {
       
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       setPhoto(dataUrl);
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhoto(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -551,21 +539,7 @@ function ExamContent() {
                     拍照
                   </Button>
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-slate-300"></div>
-                    <span className="text-sm text-slate-500">或</span>
-                    <div className="flex-1 h-px bg-slate-300"></div>
-                  </div>
 
-                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => fileInputRef.current?.click()} 
-                    className="w-full h-12 border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50"
-                  >
-                    <Upload className="h-5 w-5 mr-2" />
-                    从相册选择照片
-                  </Button>
                 </div>
               )}
 
