@@ -415,7 +415,9 @@ export default function AdminPage() {
               // 重置所有元素的计算样式
               const allElements = clonedBody.querySelectorAll('*');
               allElements.forEach(el => {
-                el.style.cssText += 'background: inherit !important;';
+                if (el instanceof HTMLElement) {
+                  el.style.cssText += 'background: inherit !important;';
+                }
               });
             }
           }
