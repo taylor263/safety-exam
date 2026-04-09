@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Search, Users, CheckCircle, XCircle, 
-  Shield, Smartphone, Calendar, Eye, Clock
+  Calendar, Eye, Clock
 } from 'lucide-react';
 import { workTypes } from '@/lib/questions';
 
@@ -95,7 +95,7 @@ export default function AdminPage() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 60) return 'text-green-600 bg-green-50';
+    if (score >= 80) return 'text-green-600 bg-green-50';
     return 'text-red-600 bg-red-50';
   };
 
@@ -199,11 +199,11 @@ export default function AdminPage() {
               <div className="bg-slate-50 p-3 rounded-lg md:col-span-2">
                 <p className="text-xs text-slate-500 mb-1">成绩</p>
                 <div className="flex items-center gap-2">
-                  <span className={`text-3xl font-bold ${selectedRecord.score >= 60 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-3xl font-bold ${selectedRecord.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
                     {selectedRecord.score}
                   </span>
                   <span className="text-slate-500">分</span>
-                  {selectedRecord.score >= 60 ? (
+                  {selectedRecord.score >= 80 ? (
                     <Badge className="bg-green-600">及格</Badge>
                   ) : (
                     <Badge className="bg-red-600">不及格</Badge>
@@ -280,7 +280,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800">
-                  {records.filter(r => r.score >= 60).length}
+                  {records.filter(r => r.score >= 80).length}
                 </p>
                 <p className="text-sm text-slate-500">及格人数</p>
               </div>
@@ -293,7 +293,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800">
-                  {records.filter(r => r.score < 60).length}
+                  {records.filter(r => r.score < 80).length}
                 </p>
                 <p className="text-sm text-slate-500">不及格人数</p>
               </div>
@@ -358,7 +358,7 @@ export default function AdminPage() {
                       </td>
                       <td className="p-4">
                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-semibold ${getScoreColor(record.score)}`}>
-                          {record.score >= 60 ? (
+                          {record.score >= 80 ? (
                             <CheckCircle className="h-4 w-4" />
                           ) : (
                             <XCircle className="h-4 w-4" />

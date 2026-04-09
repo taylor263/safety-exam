@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, FileText, Users, ShieldCheck, Zap, Smartphone } from 'lucide-react';
+import { Shield, FileText, Users, Zap, Smartphone } from 'lucide-react';
 import { workTypes, type WorkType } from '@/lib/questions';
 
 export default function HomePage() {
@@ -81,7 +81,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-4 text-center text-slate-600 text-sm">
-              <p>总分 100 分，及格分数 60 分</p>
+              <p>总分 100 分，及格分数 80 分</p>
             </div>
           </CardContent>
         </Card>
