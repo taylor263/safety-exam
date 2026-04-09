@@ -118,9 +118,13 @@ export default function AdminPage() {
 
   // 导出所有记录到Excel
   const exportToExcel = () => {
-    setLoading(true);
     try {
       // 直接导出，不获取照片URL
+      if (filteredRecords.length === 0) {
+        alert('没有可导出的记录');
+        return;
+      }
+      
       const exportData = filteredRecords.map((record, index) => {
         const answers = parseAnswers(record.answers);
         const stats = getAnswerStats(answers);
@@ -180,8 +184,6 @@ export default function AdminPage() {
     } catch (err) {
       console.error('导出失败', err);
       alert('导出失败，请重试');
-    } finally {
-      setLoading(false);
     }
   };
 
