@@ -120,14 +120,45 @@ function ExamContent() {
   const startCamera = async () => {
     try {
       setCameraError('');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      
+      // 兼容各种手机浏览器
+      const constraints = {
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 960, min: 480 },
+        },
+        audio: false,
+      };
+      
+      let stream: MediaStream | null = null;
+      
+      // 尝试新版 API
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch {
+        // iOS 旧版 Safari 或其他兼容问题，尝试备用方案
+        const legacyConstraints = { video: true, audio: false };
+        // @ts-ignore - 兼容旧版浏览器
+        const getUserMedia = navigator.mediaDevices.getUserMedia 
+          || navigator.webkitGetUserMedia 
+          || navigator.mozGetUserMedia 
+          || navigator.msGetUserMedia;
+        
+        if (getUserMedia) {
+          stream = await new Promise((resolve, reject) => {
+            getUserMedia.call(navigator, legacyConstraints, resolve, reject);
+          });
+        }
       }
-    } catch {
-      setCameraError('无法访问摄像头，请使用相册上传');
+      
+      if (stream && videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      setCameraError('无法访问摄像头，请使用相册上传照片');
     }
   };
 
@@ -143,14 +174,38 @@ function ExamContent() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        setPhoto(dataUrl);
+      
+      // 确保视频已经加载并有实际尺寸
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        // 等待视频尺寸就绪
+        setTimeout(takePhoto, 100);
+        return;
       }
+      
+      // 根据视频方向调整 canvas 尺寸
+      const isPortrait = video.videoHeight > video.videoWidth;
+      if (isPortrait) {
+        canvas.width = video.videoHeight;
+        canvas.height = video.videoWidth;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.save();
+          ctx.translate(canvas.width, 0);
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(video, 0, 0);
+          ctx.restore();
+        }
+      } else {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0);
+        }
+      }
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setPhoto(dataUrl);
     }
   };
 
@@ -470,13 +525,29 @@ function ExamContent() {
                     </div>
                   )}
                   
-                  <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
-                    <video ref={videoRef} autoPlay playsInline muted className="w-full" />
+                  <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden relative">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted
+                      className="w-full" 
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                    {cameraError && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-200">
+                        <p className="text-slate-600 text-center p-4">{cameraError}</p>
+                      </div>
+                    )}
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                   
-                  <Button onClick={takePhoto} className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md">
-                    <Camera className="h-5 w-5 mr-2" />
+                  <Button 
+                    onClick={takePhoto} 
+                    disabled={!!cameraError}
+                    className="w-full h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md text-lg"
+                  >
+                    <Camera className="h-6 w-6 mr-2" />
                     拍照
                   </Button>
 
@@ -486,10 +557,14 @@ function ExamContent() {
                     <div className="flex-1 h-px bg-slate-300"></div>
                   </div>
 
-                  <input type="file" accept="image/*" capture="user" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
-                  <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full h-12">
-                    <Upload className="h-4 w-4 mr-2" />
-                    从相册选择
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()} 
+                    className="w-full h-12 border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50"
+                  >
+                    <Upload className="h-5 w-5 mr-2" />
+                    从相册选择照片
                   </Button>
                 </div>
               )}
