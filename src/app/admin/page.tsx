@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, Search, Users, CheckCircle, XCircle, 
-  Calendar, Eye, Clock, Building2, CreditCard, Phone
+  Calendar, Eye, Clock, Building2, CreditCard, Phone,
+  FileText, CircleDot, CheckSquare, AlignLeft
 } from 'lucide-react';
 import { workTypes } from '@/lib/questions';
 
@@ -23,6 +25,18 @@ interface ExamRecord {
   photo_key: string;
   answers: string;
   submitted_at: string;
+}
+
+// 详细答题记录结构
+interface DetailedAnswer {
+  questionId: string;
+  question: string | null;
+  type: string | null;
+  options: string[] | null;
+  userAnswer: string;
+  correctAnswer: string | null;
+  isCorrect: boolean;
+  explanation?: string;
 }
 
 export default function AdminPage() {
@@ -126,12 +140,51 @@ export default function AdminPage() {
     return phone;
   };
 
-  const parseAnswers = (answersStr: string) => {
+  // 获取题目类型标签
+  const getQuestionTypeInfo = (type: string | null) => {
+    switch (type) {
+      case 'choice':
+        return { label: '选择题', icon: CheckSquare, color: 'text-blue-600 bg-blue-50' };
+      case 'judge':
+        return { label: '判断题', icon: CircleDot, color: 'text-green-600 bg-green-50' };
+      case 'fill':
+        return { label: '填空题', icon: AlignLeft, color: 'text-purple-600 bg-purple-50' };
+      default:
+        return { label: '未知', icon: FileText, color: 'text-slate-600 bg-slate-50' };
+    }
+  };
+
+  // 解析答题详情
+  const parseAnswers = (answersStr: string): DetailedAnswer[] => {
     try {
       return JSON.parse(answersStr);
     } catch {
-      return {};
+      return [];
     }
+  };
+
+  // 统计正确率
+  const getAnswerStats = (answers: DetailedAnswer[]) => {
+    const total = answers.length;
+    const correct = answers.filter(a => a.isCorrect).length;
+    const choiceCount = answers.filter(a => a.type === 'choice').length;
+    const judgeCount = answers.filter(a => a.type === 'judge').length;
+    const fillCount = answers.filter(a => a.type === 'fill').length;
+    const correctChoice = answers.filter(a => a.type === 'choice' && a.isCorrect).length;
+    const correctJudge = answers.filter(a => a.type === 'judge' && a.isCorrect).length;
+    const correctFill = answers.filter(a => a.type === 'fill' && a.isCorrect).length;
+    
+    return {
+      total,
+      correct,
+      accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
+      choiceCount,
+      judgeCount,
+      fillCount,
+      correctChoice,
+      correctJudge,
+      correctFill
+    };
   };
 
   // ==================== 登录页面 ====================
@@ -171,10 +224,12 @@ export default function AdminPage() {
   // ==================== 详情弹窗 ====================
   if (selectedRecord) {
     const answers = parseAnswers(selectedRecord.answers);
+    const stats = getAnswerStats(answers);
+
     return (
       <div className="min-h-screen bg-slate-50">
         <header className="bg-blue-600 text-white">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setSelectedRecord(null)} className="text-white hover:bg-white/20">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -182,14 +237,14 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 py-6">
+        <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
           {/* 基本信息卡片 */}
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <CardTitle>基本信息</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* 姓名 */}
                 <div className="bg-slate-50 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
@@ -205,7 +260,7 @@ export default function AdminPage() {
                     <Building2 className="h-4 w-4 text-slate-400" />
                     <span className="text-sm text-slate-500">公司名称</span>
                   </div>
-                  <p className="text-lg font-semibold text-slate-800">{selectedRecord.work_type}</p>
+                  <p className="text-lg font-semibold text-slate-800 truncate">{selectedRecord.work_type}</p>
                 </div>
 
                 {/* 身份证号 */}
@@ -278,26 +333,108 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* 答题详情卡片 */}
+          {/* 答题统计 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>答题统计</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
+                  <p className="text-sm text-blue-800">总题数</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <p className="text-3xl font-bold text-green-600">{stats.correct}</p>
+                  <p className="text-sm text-green-800">答对题数</p>
+                </div>
+                <div className="bg-red-50 p-4 rounded-lg text-center">
+                  <p className="text-3xl font-bold text-red-600">{stats.total - stats.correct}</p>
+                  <p className="text-sm text-red-800">答错题数</p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg text-center">
+                  <p className="text-3xl font-bold text-purple-600">{stats.accuracy}%</p>
+                  <p className="text-sm text-purple-800">正确率</p>
+                </div>
+              </div>
+              
+              {/* 分类型统计 */}
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm">选择题</span>
+                  </div>
+                  <span className="font-semibold">
+                    {stats.correctChoice}/{stats.choiceCount}
+                  </span>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CircleDot className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">判断题</span>
+                  </div>
+                  <span className="font-semibold">
+                    {stats.correctJudge}/{stats.judgeCount}
+                  </span>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlignLeft className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm">填空题</span>
+                  </div>
+                  <span className="font-semibold">
+                    {stats.correctFill}/{stats.fillCount}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 答题详情 */}
           <Card>
             <CardHeader>
               <CardTitle>答题详情</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
-                <p className="text-amber-800 text-sm">
-                  <Clock className="h-4 w-4 inline mr-1" />
-                  以下为系统记录的用户答题内容，仅供参考
-                </p>
-              </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {Object.entries(answers).map(([questionId, answer], index) => (
-                  <div key={questionId} className="bg-slate-50 p-3 rounded-lg flex items-start gap-3">
-                    <span className="font-semibold text-slate-600 min-w-[24px]">{index + 1}.</span>
-                    <span className="flex-1">{String(answer)}</span>
-                  </div>
-                ))}
-              </div>
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                  <TabsTrigger value="all">全部 ({stats.total})</TabsTrigger>
+                  <TabsTrigger value="correct">答对 ({stats.correct})</TabsTrigger>
+                  <TabsTrigger value="wrong">答错 ({stats.total - stats.correct})</TabsTrigger>
+                  <TabsTrigger value="choice">选择题</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="all" className="space-y-3">
+                  {answers.map((answer, index) => (
+                    <QuestionCard key={answer.questionId} answer={answer} index={index + 1} />
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="correct" className="space-y-3">
+                  {answers.filter(a => a.isCorrect).map((answer, index) => (
+                    <QuestionCard key={answer.questionId} answer={answer} index={answers.filter(a => a.isCorrect).indexOf(answer) + 1} />
+                  ))}
+                  {answers.filter(a => a.isCorrect).length === 0 && (
+                    <p className="text-center text-slate-500 py-8">暂无答对的题目</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="wrong" className="space-y-3">
+                  {answers.filter(a => !a.isCorrect).map((answer, index) => (
+                    <QuestionCard key={answer.questionId} answer={answer} index={answers.filter(a => !a.isCorrect).indexOf(answer) + 1} />
+                  ))}
+                  {answers.filter(a => !a.isCorrect).length === 0 && (
+                    <p className="text-center text-slate-500 py-8">全部答对</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="choice" className="space-y-3">
+                  {answers.filter(a => a.type === 'choice').map((answer, index) => (
+                    <QuestionCard key={answer.questionId} answer={answer} index={answers.filter(a => a.type === 'choice').indexOf(answer) + 1} />
+                  ))}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </main>
@@ -475,4 +612,113 @@ export default function AdminPage() {
       </main>
     </div>
   );
+}
+
+// 单个题目卡片组件
+function QuestionCard({ answer, index }: { answer: DetailedAnswer; index: number }) {
+  const typeInfo = getQuestionTypeInfo(answer.type);
+  const TypeIcon = typeInfo.icon;
+  
+  return (
+    <div className={`p-4 rounded-lg border ${answer.isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${typeInfo.color}`}>
+            <TypeIcon className="h-3 w-3" />
+            {typeInfo.label}
+          </span>
+          <span className="text-sm font-semibold text-slate-600">第{index}题</span>
+        </div>
+        {answer.isCorrect ? (
+          <span className="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
+            <CheckCircle className="h-4 w-4" />
+            正确
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-red-600 text-sm font-medium">
+            <XCircle className="h-4 w-4" />
+            错误
+          </span>
+        )}
+      </div>
+      
+      {/* 题目内容 */}
+      {answer.question && (
+        <div className="mb-3">
+          <p className="text-sm font-medium text-slate-700">{answer.question}</p>
+        </div>
+      )}
+      
+      {/* 选项（仅选择题显示） */}
+      {answer.type === 'choice' && answer.options && (
+        <div className="mb-3 space-y-1">
+          {answer.options.map((option, idx) => (
+            <div 
+              key={idx}
+              className={`text-sm p-2 rounded ${
+                option[0] === answer.correctAnswer?.[0]
+                  ? 'bg-green-100 text-green-700 font-medium'
+                  : option[0] === answer.userAnswer?.[0] && !answer.isCorrect
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* 判断题显示 */}
+      {answer.type === 'judge' && (
+        <div className="mb-3 flex gap-2">
+          <span className={`text-sm p-2 rounded ${
+            answer.correctAnswer === '正确' ? 'bg-green-100 text-green-700 font-medium' : 'bg-red-100 text-red-700'
+          }`}>
+            正确
+          </span>
+          <span className={`text-sm p-2 rounded ${
+            answer.correctAnswer === '错误' ? 'bg-green-100 text-green-700 font-medium' : 'bg-red-100 text-red-700'
+          }`}>
+            错误
+          </span>
+        </div>
+      )}
+      
+      {/* 用户答案和正确答案 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`p-2 rounded text-sm ${answer.isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <span className="text-slate-500">你的答案：</span>
+          <span className="font-medium">{answer.userAnswer || '(未作答)'}</span>
+        </div>
+        {!answer.isCorrect && answer.correctAnswer && (
+          <div className="p-2 rounded text-sm bg-green-100 text-green-700">
+            <span className="text-slate-500">正确答案：</span>
+            <span className="font-medium">{answer.correctAnswer}</span>
+          </div>
+        )}
+      </div>
+      
+      {/* 解析 */}
+      {answer.explanation && (
+        <div className="mt-3 p-2 rounded bg-blue-50 text-sm text-blue-700">
+          <span className="font-medium">解析：</span>{answer.explanation}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 获取题目类型信息
+function getQuestionTypeInfo(type: string | null) {
+  switch (type) {
+    case 'choice':
+      return { label: '选择题', icon: CheckSquare, color: 'text-blue-600 bg-blue-50' };
+    case 'judge':
+      return { label: '判断题', icon: CircleDot, color: 'text-green-600 bg-green-50' };
+    case 'fill':
+      return { label: '填空题', icon: AlignLeft, color: 'text-purple-600 bg-purple-50' };
+    default:
+      return { label: '未知', icon: FileText, color: 'text-slate-600 bg-slate-50' };
+  }
 }

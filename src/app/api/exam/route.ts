@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { getQuestionsByWorkType, type WorkType } from '@/lib/questions';
 
 // 获取存储的 token
 const storageToken = process.env.S3_STORAGE_TOKEN || '';
@@ -134,6 +135,41 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // 获取题目信息，构建详细答题记录
+    const questions = getQuestionsByWorkType(examModule as WorkType);
+    const questionMap = new Map(questions.map(q => [q.id, q]));
+    
+    // 构建详细答题记录
+    const detailedAnswers = Object.entries(answers || {}).map(([questionId, userAnswer]) => {
+      const question = questionMap.get(questionId);
+      if (!question) {
+        return {
+          questionId,
+          userAnswer: String(userAnswer),
+          correct: false,
+          // 空值会在前端显示
+          question: null,
+          correctAnswer: null,
+          type: null
+        };
+      }
+      
+      const userAns = String(userAnswer).trim().toLowerCase();
+      const correctAns = question.answer.trim().toLowerCase();
+      const isCorrect = userAns === correctAns;
+      
+      return {
+        questionId,
+        question: question.question,
+        type: question.type,
+        options: question.options || null,
+        userAnswer: String(userAnswer),
+        correctAnswer: question.answer,
+        isCorrect,
+        explanation: question.explanation
+      };
+    });
+    
     // 保存到数据库
     // 注意：数据库中使用 work_type 存储公司名称，exam_module 存储考试模块ID
     const { data, error } = await supabase
@@ -146,7 +182,7 @@ export async function POST(request: NextRequest) {
         phone,
         photo_key: photoKey,
         score,
-        answers: JSON.stringify(answers),
+        answers: JSON.stringify(detailedAnswers),
         submitted_at: new Date().toISOString()
       })
       .select()
