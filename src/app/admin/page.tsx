@@ -178,9 +178,17 @@ export default function AdminPage() {
         { wch: 8 },   // 有照片
       ];
 
-      // 下载Excel
-      const fileName = `安全生产培训考核_${formatDate(new Date().toISOString())}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      // 生成Excel文件并下载
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `安全生产培训考核_${formatDate(new Date().toISOString())}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('导出失败', err);
       alert('导出失败，请重试');
