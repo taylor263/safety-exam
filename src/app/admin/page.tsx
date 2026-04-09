@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 import { 
   ArrowLeft, Search, Users, CheckCircle, XCircle, 
   Calendar, Eye, Clock, Building2, CreditCard, Phone,
-  FileText, CircleDot, CheckSquare, AlignLeft, Download, Image, Camera
+  FileText, CircleDot, CheckSquare, AlignLeft, Download, ImageIcon, Camera
 } from 'lucide-react';
 import { workTypes } from '@/lib/questions';
 
@@ -128,7 +128,7 @@ export default function AdminPage() {
       const exportData = filteredRecords.map((record, index) => {
         const answers = parseAnswers(record.answers);
         const stats = getAnswerStats(answers);
-        const module = getModuleName(record.exam_module);
+        const examModule = getModuleName(record.exam_module);
         const passStatus = record.score >= 80 ? '及格' : '不及格';
         
         return {
@@ -137,7 +137,7 @@ export default function AdminPage() {
           '公司名称': record.work_type,
           '身份证号': record.id_card,
           '手机号': record.phone,
-          '考试模块': module,
+          '考试模块': examModule,
           '考试时间': formatDate(record.submitted_at),
           '考试成绩': record.score,
           '及格状态': passStatus,
@@ -179,16 +179,24 @@ export default function AdminPage() {
       ];
 
       // 生成Excel文件并下载
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([wbout], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `安全生产培训考核_${formatDate(new Date().toISOString())}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      try {
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const now = new Date();
+        const filename = `安全生产培训考核_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('Excel导出成功:', filename);
+      } catch (err) {
+        console.error('Excel生成失败', err);
+        alert('导出失败，请重试');
+      }
     } catch (err) {
       console.error('导出失败', err);
       alert('导出失败，请重试');
@@ -249,7 +257,9 @@ export default function AdminPage() {
   // 解析答题详情
   const parseAnswers = (answersStr: string): DetailedAnswer[] => {
     try {
-      return JSON.parse(answersStr);
+      const parsed = JSON.parse(answersStr);
+      // 确保返回数组
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -956,7 +966,7 @@ function PhotoDisplay({ recordId, photoKey }: { recordId: string; photoKey: stri
   if (error || !photoUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-        <Image className="h-12 w-12 mb-2" />
+        <ImageIcon className="h-12 w-12 mb-2" />
         <p>照片加载失败</p>
       </div>
     );

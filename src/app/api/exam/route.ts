@@ -4,7 +4,7 @@ import { getQuestionsByWorkType, type WorkType } from '@/lib/questions';
 import { S3Storage } from 'coze-coding-dev-sdk';
 
 // 创建带 UTF-8 编码的响应
-function jsonResponse(data: any, statusOrOptions: number | { status?: number } = 200) {
+function jsonResponse(data: Record<string, unknown>, statusOrOptions: number | { status?: number } = 200) {
   const status = typeof statusOrOptions === 'number' ? statusOrOptions : (statusOrOptions.status || 200);
   return new NextResponse(JSON.stringify(data), {
     status,
