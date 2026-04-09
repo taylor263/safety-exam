@@ -331,6 +331,29 @@ export default function AdminPage() {
           `;
         });
 
+        // 获取照片URL（如果有）
+        let photoHtml = '';
+        if (record.photo_key) {
+          try {
+            const photoResponse = await fetch(`/api/exam/records/${record.id}`);
+            const photoData = await photoResponse.json();
+            if (photoData.success && photoData.data?.photo_url) {
+              photoHtml = `
+                <div style="margin-top: 30px; padding: 20px; border: 2px solid #e2e8f0; border-radius: 10px; page-break-inside: avoid;">
+                  <p style="margin: 0 0 15px 0; font-size: 18px; color: #1e40af;"><strong>考生答题照片</strong></p>
+                  <div style="text-align: center;">
+                    <img src="${photoData.data.photo_url}" alt="考生照片" style="max-width: 100%; max-height: 500px; border-radius: 8px; border: 1px solid #e2e8f0;" crossorigin="anonymous" />
+                  </div>
+                </div>
+              `;
+            }
+          } catch (err) {
+            console.error('获取照片失败', err);
+          }
+        }
+
+        // 完成HTML内容
+        htmlContent += photoHtml;
         htmlContent += '</div>';
         
         // 使用 Blob URL 创建独立的HTML页面渲染
