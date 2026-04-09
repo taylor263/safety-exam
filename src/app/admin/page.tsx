@@ -216,6 +216,19 @@ export default function AdminPage() {
               返回首页
             </Button>
           </CardContent>
+          
+          {/* 版权保护信息 */}
+          <div className="px-6 pb-6 text-center border-t border-slate-100 pt-4">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <svg width="24" height="15" viewBox="0 0 36 22">
+                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
+                <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
+              </svg>
+              <span className="text-xs text-slate-400">东方电气</span>
+            </div>
+            <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料</p>
+            <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 精心制作</p>
+          </div>
         </Card>
       </div>
     );
@@ -229,16 +242,22 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
-          {/* DEC标识条 */}
+          {/* DEC品牌标识条 */}
           <div className="bg-red-700">
-            <div className="max-w-5xl mx-auto px-4 py-1.5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                  <span className="text-red-600 font-bold text-sm">DEC</span>
+            <div className="max-w-5xl mx-auto px-4 py-1.5">
+              <div className="flex items-center justify-center gap-3">
+                {/* DEC椭圆Logo */}
+                <svg width="28" height="17" viewBox="0 0 36 22" className="mr-2">
+                  <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                  <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="serif">DEC</text>
+                </svg>
+                <div className="text-left">
+                  <div className="text-xs font-bold text-white leading-tight">东方电气</div>
+                  <div className="text-xs text-red-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
                 </div>
-                <span className="text-xs text-red-100">安全生产培训 - 管理端</span>
+                <div className="h-6 w-px bg-red-500 mx-2"></div>
+                <span className="text-xs text-red-100">管理端</span>
               </div>
-              <span className="text-xs text-red-200">考试成绩管理</span>
             </div>
           </div>
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
@@ -458,16 +477,22 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
-        {/* DEC标识条 */}
+        {/* DEC品牌标识条 */}
         <div className="bg-red-700">
-          <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                <span className="text-red-600 font-bold text-sm">DEC</span>
+          <div className="max-w-6xl mx-auto px-4 py-1.5">
+            <div className="flex items-center justify-center gap-3">
+              {/* DEC椭圆Logo */}
+              <svg width="28" height="17" viewBox="0 0 36 22" className="mr-2">
+                <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="white" strokeWidth="1.5"/>
+                <text x="18" y="15" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="serif">DEC</text>
+              </svg>
+              <div className="text-left">
+                <div className="text-xs font-bold text-white leading-tight">东方电气</div>
+                <div className="text-xs text-red-200 leading-tight tracking-wide">DONGFANG ELECTRIC</div>
               </div>
-              <span className="text-xs text-red-100">安全生产培训 - 管理端</span>
+              <div className="h-6 w-px bg-red-500 mx-2"></div>
+              <span className="text-xs text-red-100">管理端</span>
             </div>
-            <span className="text-xs text-red-200">考试成绩管理</span>
           </div>
         </div>
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -633,6 +658,19 @@ export default function AdminPage() {
             </div>
           </Card>
         )}
+
+        {/* 版权保护信息 */}
+        <div className="mt-6 pt-6 border-t border-slate-200 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <svg width="24" height="15" viewBox="0 0 36 22">
+              <ellipse cx="18" cy="11" rx="17" ry="10" fill="none" stroke="#64748b" strokeWidth="1"/>
+              <text x="18" y="15" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="bold" fontFamily="serif">DEC</text>
+            </svg>
+            <span className="text-xs text-slate-400">东方电气</span>
+          </div>
+          <p className="text-xs text-slate-400">© {new Date().getFullYear()} 东方电气精细电子材料</p>
+          <p className="text-xs text-slate-300 mt-1">本系统由 <span className="text-slate-400">蒋曦</span> 精心制作</p>
+        </div>
       </main>
     </div>
   );
