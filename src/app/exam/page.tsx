@@ -139,14 +139,13 @@ function ExamContent() {
         // iOS 旧版 Safari 或其他兼容问题，尝试备用方案
         const legacyConstraints = { video: true, audio: false };
         // @ts-ignore - 兼容旧版浏览器
-        const getUserMedia = navigator.mediaDevices.getUserMedia 
-          || navigator.webkitGetUserMedia 
-          || navigator.mozGetUserMedia 
-          || navigator.msGetUserMedia;
+        const getUserMedia = (
+          navigator as unknown as { webkitGetUserMedia?: (c: object, s: (s: MediaStream) => void, e: (e: Error) => void) => void }
+        ).webkitGetUserMedia;
         
         if (getUserMedia) {
-          stream = await new Promise((resolve, reject) => {
-            getUserMedia.call(navigator, legacyConstraints, resolve, reject);
+          stream = await new Promise<MediaStream>((resolve, reject) => {
+            getUserMedia(legacyConstraints, resolve, reject);
           });
         }
       }

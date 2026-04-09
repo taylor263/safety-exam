@@ -706,7 +706,7 @@ export default function AdminPage() {
                     <span className="text-sm font-semibold text-slate-700">答题照片凭证</span>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <PhotoDisplay recordId={selectedRecord.id} photoKey={selectedRecord.photo_key} />
+                    <PhotoDisplay recordId={String(selectedRecord.id)} photoKey={selectedRecord.photo_key} />
                   </div>
                 </div>
               )}
