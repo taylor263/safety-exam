@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { getQuestionsByWorkType, type WorkType } from '@/lib/questions';
+import { S3Storage } from 'coze-coding-dev-sdk';
 
 // 创建带 UTF-8 编码的响应
 function jsonResponse(data: any, statusOrOptions: number | { status?: number } = 200) {
@@ -13,8 +14,12 @@ function jsonResponse(data: any, statusOrOptions: number | { status?: number } =
   });
 }
 
-// 获取存储的 token
-const storageToken = process.env.S3_STORAGE_TOKEN || '';
+// 初始化存储
+const storage = new S3Storage({
+  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+  bucketName: process.env.COZE_BUCKET_NAME,
+  region: 'cn-beijing',
+});
 
 async function uploadPhoto(base64Data: string): Promise<string | null> {
   try {
@@ -22,27 +27,19 @@ async function uploadPhoto(base64Data: string): Promise<string | null> {
     const base64Response = await fetch(base64Data);
     const blob = await base64Response.blob();
     const buffer = await blob.arrayBuffer();
+    const fileBuffer = Buffer.from(buffer);
     
     // 生成唯一文件名
     const fileName = `exam_photos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
     
     // 上传到 S3
-    const response = await fetch('https://api.coze.cn/v1/files/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${storageToken}`,
-        'Content-Type': 'application/octet-stream',
-      },
-      body: buffer,
+    const key = await storage.uploadFile({
+      fileContent: fileBuffer,
+      fileName: fileName,
+      contentType: 'image/jpeg',
     });
     
-    if (!response.ok) {
-      console.error('上传失败:', response.statusText);
-      return null;
-    }
-    
-    const result = await response.json();
-    return result.data?.id || null;
+    return key;
   } catch (error) {
     console.error('上传错误:', error);
     return null;
