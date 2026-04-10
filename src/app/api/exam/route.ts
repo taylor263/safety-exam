@@ -13,38 +13,39 @@ function jsonResponse(data: Record<string, unknown>, statusOrOptions: number | {
   });
 }
 
-// 上传到 ImgBB（免费图床）
+// 上传到 Supabase Storage
 async function uploadPhoto(base64Data: string): Promise<string | null> {
   try {
-    const apiKey = process.env.IMGBB_API_KEY;
-    if (!apiKey) {
-      console.error('IMGBB_API_KEY 未配置');
-      return null;
-    }
-
-    // 将 base64 转换为 binary
+    const supabase = getSupabaseClient();
+    
+    // 将 base64 转换为 Buffer
     const base64Response = await fetch(base64Data);
     const blob = await base64Response.blob();
     const arrayBuffer = await blob.arrayBuffer();
-    const binary = Buffer.from(arrayBuffer);
+    const fileBuffer = Buffer.from(arrayBuffer);
+    
+    // 生成唯一文件名
+    const fileName = `exam_photos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+    
+    // 上传到 Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('exam-photos')
+      .upload(fileName, fileBuffer, {
+        contentType: 'image/jpeg',
+        upsert: false,
+      });
 
-    // 上传到 ImgBB
-    const formData = new FormData();
-    formData.append('image', binary.toString('base64'));
-
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (result.success && result.data && result.data.url) {
-      return result.data.url; // 返回完整图片 URL
-    } else {
-      console.error('ImgBB 上传失败:', result);
+    if (error) {
+      console.error('Supabase Storage 上传错误:', error);
       return null;
     }
+
+    // 获取公开访问 URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('exam-photos')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
   } catch (error) {
     console.error('上传错误:', error);
     return null;
