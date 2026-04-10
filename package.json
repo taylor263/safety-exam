@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "dev": "bash ./scripts/dev.sh",
-    "build": "bash ./scripts/build.sh",
-    "start": "bash ./scripts/start.sh",
+    "dev": "pnpm next dev -p 5000",
+    "build": "pnpm next build",
+    "start": "pnpm next start -p 5000",
     "lint": "eslint",
     "ts-check": "tsc -p tsconfig.json"
   },
