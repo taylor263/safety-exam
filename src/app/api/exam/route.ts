@@ -18,11 +18,16 @@ async function uploadPhoto(base64Data: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     
-    // 将 base64 转换为 Buffer
-    const base64Response = await fetch(base64Data);
-    const blob = await base64Response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
+    // 处理 data URL 格式 (data:image/jpeg;base64,xxxxx)
+    let buffer: Buffer;
+    if (base64Data.startsWith('data:')) {
+      // 提取 base64 部分
+      const base64 = base64Data.split(',')[1];
+      buffer = Buffer.from(base64, 'base64');
+    } else {
+      // 如果是普通 base64 字符串
+      buffer = Buffer.from(base64Data, 'base64');
+    }
     
     // 生成唯一文件名
     const fileName = `exam_photos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
@@ -30,7 +35,7 @@ async function uploadPhoto(base64Data: string): Promise<string | null> {
     // 上传到 Supabase Storage
     const { data, error } = await supabase.storage
       .from('exam-photos')
-      .upload(fileName, fileBuffer, {
+      .upload(fileName, buffer, {
         contentType: 'image/jpeg',
         upsert: false,
       });
