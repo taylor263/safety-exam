@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { S3Storage } from 'coze-coding-dev-sdk';
-
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
 
 // 创建带 UTF-8 编码的响应
 function jsonResponse(data: Record<string, unknown>, statusOrOptions: number | { status?: number } = 200) {
@@ -49,18 +42,8 @@ export async function GET(
       );
     }
 
-    // 生成照片访问 URL
-    let photoUrl = '';
-    if (data.photo_key) {
-      try {
-        photoUrl = await storage.generatePresignedUrl({
-          key: data.photo_key,
-          expireTime: 86400, // 24小时
-        });
-      } catch (urlError) {
-        console.error('生成照片URL失败:', urlError);
-      }
-    }
+    // photo_key 现在直接存储的是完整公开 URL，无需额外处理
+    const photoUrl = data.photo_key || '';
 
     return jsonResponse({
       success: true,
