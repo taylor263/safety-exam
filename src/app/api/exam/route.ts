@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { getQuestionsByWorkType, type WorkType } from '@/lib/questions';
-import { S3Storage } from 'coze-coding-dev-sdk';
 
 // 创建带 UTF-8 编码的响应
 function jsonResponse(data: Record<string, unknown>, statusOrOptions: number | { status?: number } = 200) {
@@ -14,32 +13,38 @@ function jsonResponse(data: Record<string, unknown>, statusOrOptions: number | {
   });
 }
 
-// 初始化存储
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
-
+// 上传到 ImgBB（免费图床）
 async function uploadPhoto(base64Data: string): Promise<string | null> {
   try {
-    // 将 base64 转换为 Buffer
+    const apiKey = process.env.IMGBB_API_KEY;
+    if (!apiKey) {
+      console.error('IMGBB_API_KEY 未配置');
+      return null;
+    }
+
+    // 将 base64 转换为 binary
     const base64Response = await fetch(base64Data);
     const blob = await base64Response.blob();
-    const buffer = await blob.arrayBuffer();
-    const fileBuffer = Buffer.from(buffer);
-    
-    // 生成唯一文件名
-    const fileName = `exam_photos/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-    
-    // 上传到 S3
-    const key = await storage.uploadFile({
-      fileContent: fileBuffer,
-      fileName: fileName,
-      contentType: 'image/jpeg',
+    const arrayBuffer = await blob.arrayBuffer();
+    const binary = Buffer.from(arrayBuffer);
+
+    // 上传到 ImgBB
+    const formData = new FormData();
+    formData.append('image', binary.toString('base64'));
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+      method: 'POST',
+      body: formData,
     });
-    
-    return key;
+
+    const result = await response.json();
+
+    if (result.success && result.data && result.data.url) {
+      return result.data.url; // 返回完整图片 URL
+    } else {
+      console.error('ImgBB 上传失败:', result);
+      return null;
+    }
   } catch (error) {
     console.error('上传错误:', error);
     return null;

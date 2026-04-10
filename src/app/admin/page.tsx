@@ -706,7 +706,7 @@ export default function AdminPage() {
                     <span className="text-sm font-semibold text-slate-700">答题照片凭证</span>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <PhotoDisplay recordId={String(selectedRecord.id)} photoKey={selectedRecord.photo_key} />
+                    <PhotoDisplay photoKey={selectedRecord.photo_key} />
                   </div>
                 </div>
               )}
@@ -1197,56 +1197,32 @@ function getQuestionTypeInfo(type: string | null) {
   }
 }
 
-// 照片显示组件
-function PhotoDisplay({ recordId, photoKey }: { recordId: string; photoKey: string }) {
-  const [photoUrl, setPhotoUrl] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+// 照片显示组件（photoKey 现在直接是完整 URL）
+function PhotoDisplay({ photoKey }: { photoKey: string }) {
   const [error, setError] = useState(false);
 
+  // photoKey 现在直接是 ImgBB 的完整 URL
+  const photoUrl = photoKey;
+
   useEffect(() => {
-    const fetchPhotoUrl = async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        // 使用 recordId 获取照片 URL
-        const response = await fetch(`/api/exam/records/${recordId}`);
-        const data = await response.json();
-        if (data.success && data.data?.photo_url) {
-          setPhotoUrl(data.data.photo_url);
-        } else {
-          setError(true);
-        }
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (recordId) {
-      fetchPhotoUrl();
-    }
-  }, [recordId]);
+    // 预加载图片
+    const img = new Image();
+    img.onload = () => setError(false);
+    img.onerror = () => setError(true);
+    img.src = photoUrl;
+  }, [photoUrl]);
 
   const downloadPhoto = () => {
     if (photoUrl) {
       const link = document.createElement('a');
       link.href = photoUrl;
-      link.download = `考试照片_${photoKey}.jpg`;
+      link.download = `考试照片_${Date.now()}.jpg`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
 
   if (error || !photoUrl) {
     return (
