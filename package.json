@@ -1,13 +1,13 @@
 {
-  "name": "projects",
+  "name": "safety-exam",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "bash ./scripts/build.sh",
     "dev": "bash ./scripts/dev.sh",
-    "install": "pnpm install",
-    "lint": "eslint",
+    "build": "bash ./scripts/build.sh",
     "start": "bash ./scripts/start.sh",
+    "lint": "eslint",
     "ts-check": "tsc -p tsconfig.json"
   },
   "dependencies": {
