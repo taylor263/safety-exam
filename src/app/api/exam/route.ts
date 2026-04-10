@@ -29,7 +29,7 @@ async function uploadPhoto(base64Data: string): Promise<string | null> {
     
     // 上传到 Supabase Storage
     const { data, error } = await supabase.storage
-      .from('考试照片')
+      .from('exam-photos')
       .upload(fileName, fileBuffer, {
         contentType: 'image/jpeg',
         upsert: false,
@@ -42,7 +42,7 @@ async function uploadPhoto(base64Data: string): Promise<string | null> {
 
     // 获取公开访问 URL
     const { data: { publicUrl } } = supabase.storage
-      .from('考试照片')
+      .from('exam-photos')
       .getPublicUrl(data.path);
 
     return publicUrl;
